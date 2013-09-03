@@ -50,11 +50,12 @@ class NoteBook {
     }
     
     void setPassword(String password) throws InvalidPasswordException {
+        StringBuilder sb = new StringBuilder(password);
+        password = sb.toString() + sb.reverse().toString();
         this.executor.schedule(new BlankPasswordTask(), secondsToCachePassword, TimeUnit.SECONDS);
         try {
-            MessageDigest hasher = MessageDigest.getInstance("SHA1");
-            byte[] hash = hasher.digest(password.getBytes());
-            this.password = ByteUtility.toHexString(hash);
+            byte[] hashword = MessageDigest.getInstance("SHA-256").digest(password.getBytes());
+            this.password = ByteUtility.toHexString(hashword);
         } catch (NoSuchAlgorithmException ex) {
             blankPassword();
             Logger.getLogger(NoteBook.class.getName()).log(Level.SEVERE, ex.getMessage(), ex);

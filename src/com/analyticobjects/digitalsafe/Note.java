@@ -13,9 +13,9 @@ class Note implements Serializable {
     static final String GET = "GET";
     static final String FIND = "FIND";
     static final String DELETE = "DELETE";
-    static final String VERSION = "0.0.1";
+    static final String VERSION = "1";
     
-    private String version;
+    private final String version;
     private String name;
     private String message;
     

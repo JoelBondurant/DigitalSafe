@@ -25,8 +25,8 @@ public class Help {
     
    
     static void printHelp() {
-        TextSafe.println("Help:\n");
-        TextSafe.println(COMMAND_LIST);
+        DigitalSafe.println("Help:\n");
+        DigitalSafe.println(COMMAND_LIST);
     }
     
 }

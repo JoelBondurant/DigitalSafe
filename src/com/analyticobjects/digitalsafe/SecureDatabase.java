@@ -37,8 +37,8 @@ import javax.crypto.spec.SecretKeySpec;
  */
 final class SecureDatabase {
     
-    private static final String FILE_NAME = "textSafe.safe";
-    private static final String SWAP_NAME = "textSafe.swap";
+    private static final String FILE_NAME = "digitalSafe.safe";
+    private static final String SWAP_NAME = "digitalSafe.swap";
     private static final String KEYGEN = "PBKDF2WithHmacSHA1";
     private static final String AES = "AES/CBC/PKCS5Padding";
     private static final int AES_KEY_LENGTH = 128;
@@ -89,7 +89,7 @@ final class SecureDatabase {
                 noteMap.put(note.getName(), note);
             }
         } catch (IOException | ClassNotFoundException ex) {
-            Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getMessage(), ex);
+            Logger.getLogger(SecureDatabase.class.getName()).log(Level.FINEST, ex.getMessage(), ex);
         }
         return noteMap;
     }
@@ -105,7 +105,7 @@ final class SecureDatabase {
             Files.write(filePath(FILE_NAME), textSafe);
             Files.write(filePath(SWAP_NAME), textSafe);
         } catch (IOException ex) {
-            Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getMessage(), ex);
+            Logger.getLogger(SecureDatabase.class.getName()).log(Level.FINEST, ex.getMessage(), ex);
         }
     }
     

@@ -21,11 +21,12 @@ class NoteBook {
     
     private static NoteBook singleton;
     static final String BLANK = "";
-    private ScheduledExecutorService executor;
+    private final ScheduledExecutorService executor;
     private String password;
     private int secondsToCachePassword;
     private int secondsToClearClipboard;
     static final String RESET = "RESET";
+    private final String PASSWORD_SALT = "abcDEF1234!@#$";
     
     
     private NoteBook() {
@@ -51,10 +52,25 @@ class NoteBook {
     
     void setPassword(String password) throws InvalidPasswordException {
         StringBuilder sb = new StringBuilder(password);
-        password = sb.toString() + sb.reverse().toString();
+        sb.append(PASSWORD_SALT);
+        sb.append(sb.toString().toLowerCase());
+        sb.append(sb.toString().toUpperCase());
+        sb.append(sb.reverse().toString());
+        password = sb.toString();
+        
         this.executor.schedule(new BlankPasswordTask(), secondsToCachePassword, TimeUnit.SECONDS);
         try {
-            byte[] hashword = MessageDigest.getInstance("SHA-256").digest(password.getBytes());
+            MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+            MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            byte[] hashword = sha256.digest(password.getBytes());
+            for (int i = 0; i <= 100000; i++) {
+                hashword = sha256.digest(hashword);
+                hashword = sha1.digest(hashword);
+                hashword = md5.digest(hashword);
+                hashword = sha1.digest(hashword);
+                hashword = sha256.digest(hashword);
+            }
             this.password = ByteUtility.toHexString(hashword);
         } catch (NoSuchAlgorithmException ex) {
             blankPassword();
@@ -139,6 +155,16 @@ class NoteBook {
     class InvalidPasswordException extends Exception {
         InvalidPasswordException() {
             super("Password was invalid.");
+        }
+    }
+    
+    
+    @Override
+    protected void finalize() throws Throwable {
+        try {
+            (new ClearClipBoardTask()).run();
+        } catch (Exception ex) {
+            super.finalize();
         }
     }
     

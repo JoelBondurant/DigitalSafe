@@ -18,19 +18,20 @@ import java.util.logging.Logger;
  * @author Joel Bondurant
  *  @since 2013.08
  */
-public class TextSafe {
+public class DigitalSafe {
     
     private NoteBook noteBook;
     private ResourceBundle textBundle;
     private static final String COMMAND_PROMPT = "ts:> ";
     private static final String DEBUG = "DEBUG";
+    private static final Level LOGGING_LEVEL = Level.INFO;
     
     
-    private TextSafe() {
+    private DigitalSafe() {
         textBundle = ResourceBundle.getBundle(TextResourceBundle.class.getName());
         noteBook = NoteBook.getInstance();
         SecureDatabase.prepFiles();
-        setLoggingLevelGlobally(Level.OFF);
+        setLoggingLevelGlobally(LOGGING_LEVEL);
     }
     
     private void setLoggingLevelGlobally(Level loggingLevel) {
@@ -45,9 +46,9 @@ public class TextSafe {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        TextSafe textSafe = new TextSafe();
-        //textSafe.printSecurityProviders();
-        textSafe.repl();
+        DigitalSafe digiSafe = new DigitalSafe();
+        //digiSafe.printSecurityProviders();
+        digiSafe.repl();
     }
     
 

@@ -1,0 +1,10 @@
+Note - title, message, tags, createTime, updateTime
+PasswordNote(Note) - userName, password, url, expirationTime
+FileNote(Note) - fileName, fileContents
+PictureNote(FileNote) - 
+
+password expiration
+DigitalSafe.finally {clear clipboard}
+password generation by pattern
+password strength
+

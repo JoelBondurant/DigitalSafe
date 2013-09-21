@@ -23,12 +23,12 @@ public class TextResourceBundle extends ListResourceBundle {
     }
     
     static final Object[][] contents = {
-        {VERSION, "0.0.1"},
-        {APP_NAME, "TextSafe"},
+        {VERSION, "0.0.2"},
+        {APP_NAME, "DigitalSafe"},
         {HELP_PROMPT, "type ? for help."},
         {UNKNOWN, "What the what?"},
         {PASSWORD_PROMPT, "Please enter password: "},
-        {EXIT, "Exiting TextSafe."}
+        {EXIT, "Exiting DigitalSafe."}
     };
     
 }

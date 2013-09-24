@@ -43,47 +43,14 @@ public class ByteUtility {
 	 * @return A list of the integers.
 	 */
 	public static List<Integer> intStrList2intList(String intStrList, String delimiter) {
-		List<Integer> intList = new ArrayList<Integer>();
-		String[] intStrArr = intStrList.split(delimiter);
+                String[] intStrArr = intStrList.split(delimiter);
+		List<Integer> intList = new ArrayList<>(intStrArr.length);
 		for(String intStr: intStrArr) {
 			intList.add(Integer.parseInt(intStr));
 		}
 		return intList;
 	}
 
-	/**
-	 * Bit packs a list of integers into a long. Note that for this to work, all integers must be
-	 * less than (Long.SIZE - 1) = 63.
-	 * TODO: move to lot or wafer class.
-	 * @param slotList List of slot numbers.
-	 * @return A long representing the bit packed list of slot numbers.
-	 */
-	public static long slots2long(List<Integer> slotList) {
-		long slotLong = 0L;
-		for (Integer slotNum: slotList) {
-			if (slotNum >= Long.SIZE) {
-				//TODO: throw exception.
-			}
-			slotLong += Math.pow(2, slotNum - 1);
-		}
-		return slotLong;
-	}
 
-	/**
-	 * 
-	 * Bit unpacks a long into a list of integers in range [1, Long.SIZE - 1].
-	 * @param n long
-	 * @return A list of integers in the bit packed list of slot numbers.
-	 */
-	public static List<Integer> long2slots(long n) {
-		List<Integer> slots = new ArrayList<Integer>();
-		for (int i = 0; i < Long.SIZE; i++) {
-			long x = (long) Math.pow(2, i);
-			if ((x & n) == x) {
-				slots.add(i + 1);
-			}
-		}
-		return slots;
-	}
 
 }

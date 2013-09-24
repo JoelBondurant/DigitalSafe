@@ -3,8 +3,14 @@ PasswordNote(Note) - userName, password, url, expirationTime
 FileNote(Note) - fileName, fileContents
 PictureNote(FileNote) - 
 
-password expiration
-DigitalSafe.finally {clear clipboard}
+DigitalSafe
+    TableOfContents
+    Notebook
+    PasswordBook
+    PictureBook
+    FileBook
+
+
 password generation by pattern
 password strength
 

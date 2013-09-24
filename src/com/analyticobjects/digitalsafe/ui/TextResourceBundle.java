@@ -1,4 +1,4 @@
-package com.analyticobjects.digitalsafe;
+package com.analyticobjects.digitalsafe.ui;
 
 import java.util.ListResourceBundle;
 

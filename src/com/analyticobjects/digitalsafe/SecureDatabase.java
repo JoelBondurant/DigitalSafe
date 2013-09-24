@@ -1,5 +1,8 @@
 package com.analyticobjects.digitalsafe;
 
+import com.analyticobjects.digitalsafe.exceptions.InvalidPasswordException;
+import com.analyticobjects.digitalsafe.exceptions.PasswordExpiredException;
+import com.analyticobjects.digitalsafe.containers.NoteBook;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -11,12 +14,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.crypto.BadPaddingException;
@@ -54,7 +54,7 @@ final class SecureDatabase {
             try {
                 dbFile.createNewFile();
             } catch (IOException ex) {
-                Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getMessage(), ex);
+                Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
             }
         }
     }
@@ -78,34 +78,29 @@ final class SecureDatabase {
         prepDB(name);
     }
     
-    private static Map<String, Note> getNoteMap() throws NoteBook.PasswordExpiredException {
-        Map<String, Note> noteMap = new HashMap<>();
-        List<Note> notes;
+    static NoteBook getNoteBook() throws PasswordExpiredException {
+        NoteBook notebook = null;
         try {
-            byte[] textSafe = decrypt(Files.readAllBytes(filePath(FILE_NAME)));
-            ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(textSafe));
-            notes = (ArrayList<Note>) ois.readObject();
-            for (Note note : notes) {
-                noteMap.put(note.getName(), note);
-            }
+            byte[] digiSafe = decrypt(Files.readAllBytes(filePath(FILE_NAME)));
+            ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(digiSafe));
+            notebook = (NoteBook) ois.readObject();
         } catch (IOException | ClassNotFoundException ex) {
-            Logger.getLogger(SecureDatabase.class.getName()).log(Level.FINEST, ex.getMessage(), ex);
+            Logger.getLogger(SecureDatabase.class.getName()).log(Level.FINEST, ex.getLocalizedMessage(), ex);
         }
-        return noteMap;
+        return notebook;
     }
     
-    private static void commitNoteMap(Map<String, Note> noteMap) throws NoteBook.PasswordExpiredException {
-        List<Note> notes = new ArrayList<>(noteMap.values());
+    static void commitNoteBook(NoteBook noteBook) throws PasswordExpiredException {
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(notes);
+            oos.writeObject(noteBook);
             oos.flush();
             byte[] textSafe = encrypt(bos.toByteArray());
             Files.write(filePath(FILE_NAME), textSafe);
             Files.write(filePath(SWAP_NAME), textSafe);
         } catch (IOException ex) {
-            Logger.getLogger(SecureDatabase.class.getName()).log(Level.FINEST, ex.getMessage(), ex);
+            Logger.getLogger(SecureDatabase.class.getName()).log(Level.FINEST, ex.getLocalizedMessage(), ex);
         }
     }
     
@@ -113,33 +108,34 @@ final class SecureDatabase {
         return FileSystems.getDefault().getPath(".", fileName);
     }
     
-    private static synchronized SecretKey keyGenAES() throws NoteBook.PasswordExpiredException {
+    private static synchronized SecretKey keyGenAES() throws PasswordExpiredException {
         SecretKey key = null;
         try {
             byte[] salt = "salty mcbutter salts what what".getBytes();
             int iterations = 97447;
             SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(KEYGEN);
-            PBEKeySpec pbeKeySpec = new PBEKeySpec(NoteBook.getInstance().getPassword().toCharArray(), salt, iterations, AES_KEY_LENGTH);
+            PBEKeySpec pbeKeySpec = new PBEKeySpec(DigitalSafe.getInstance().getPassword().toCharArray(), salt, iterations, AES_KEY_LENGTH);
             key = keyFactory.generateSecret(pbeKeySpec);
             key = new SecretKeySpec(key.getEncoded(), "AES");
             Thread.sleep(100); // Yes, I'm calling sleep in a synchronized block on purpose.
         } catch (NoSuchAlgorithmException | InvalidKeySpecException | InterruptedException ex) {
-            Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getMessage(), ex);
+            Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
         }
         return key;
     }
     
-    private static synchronized SecretKey keyGenBlowfish() throws NoteBook.PasswordExpiredException {
+    private static synchronized SecretKey keyGenBlowfish() throws PasswordExpiredException {
         SecretKey key = null;
         try {
             byte[] salt = "fish blows a what what".getBytes();
             int iterations = 90443;
             SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(KEYGEN);
-            key = keyFactory.generateSecret(new PBEKeySpec(NoteBook.getInstance().getPassword().toCharArray(), salt, iterations, BLOWFISH_KEY_LENGTH));
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(DigitalSafe.getInstance().getPassword().getBytes());
+            key = keyFactory.generateSecret(new PBEKeySpec(digest.toString().toCharArray(), salt, iterations, BLOWFISH_KEY_LENGTH));
             key = new SecretKeySpec(key.getEncoded(), "Blowfish");
             Thread.sleep(100); // Yes, I'm calling sleep in a synchronized block on purpose.
         } catch (NoSuchAlgorithmException | InvalidKeySpecException | InterruptedException ex) {
-            Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getMessage(), ex);
+            Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
         }
         return key;
     }
@@ -154,7 +150,7 @@ final class SecureDatabase {
         return new IvParameterSpec(iv);
     }
     
-    private static byte[] decrypt(byte[] encryptedData) throws NoteBook.PasswordExpiredException {
+    private static byte[] decrypt(byte[] encryptedData) throws PasswordExpiredException {
         byte[] unEncryptedData1;
         byte[] unEncryptedData2 = null;
         try {
@@ -166,15 +162,15 @@ final class SecureDatabase {
             SecretKey keyBlowfish = keyGenBlowfish();
             blowfish.init(Cipher.DECRYPT_MODE, keyBlowfish, ivParameterSpec8());
             unEncryptedData2 = blowfish.doFinal(unEncryptedData1);
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException | BadPaddingException | InvalidKeyException ex) {
-            Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getMessage(), ex);
-        } catch (InvalidAlgorithmParameterException | IllegalBlockSizeException ex) {
-            Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getMessage(), ex);
+        } catch (IllegalBlockSizeException | NoSuchPaddingException | BadPaddingException | InvalidKeyException ex) {
+            Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
+        } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException ex) {
+            Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
         }
         return unEncryptedData2;
     }
     
-    private static byte[] encrypt(byte[] unencryptedData) throws NoteBook.PasswordExpiredException {
+    private static byte[] encrypt(byte[] unencryptedData) throws PasswordExpiredException {
         byte[] encryptedData1;
         byte[] encryptedData2 = null;
         try {
@@ -185,44 +181,26 @@ final class SecureDatabase {
             aes.init(Cipher.ENCRYPT_MODE, keyGenAES(), ivParameterSpec16());
             encryptedData2 = aes.doFinal(encryptedData1);
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | BadPaddingException ex) {
-            Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getMessage(), ex);
+            Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
         } catch (IllegalBlockSizeException | InvalidAlgorithmParameterException ex) {
-            Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getMessage(), ex);
+            Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
         }
         return encryptedData2;
     }
     
-    static String getMessage(String name) throws NoteBook.PasswordExpiredException {
-        Map<String, Note> notes = getNoteMap();
-        if (notes.containsKey(name)) {
-            return notes.get(name).getMessage();
-        }
-        return NoteBook.BLANK;
-    }
-    
-    static String getMessageFuzzy(String namePart) throws NoteBook.PasswordExpiredException {
-        for (Note note : getNoteMap().values()) {
-            if (note.fullText().contains(namePart)) {
-                return note.getMessage();
+    static void validatePassword() throws InvalidPasswordException {
+        try {
+            if (Files.size(filePath(FILE_NAME)) < 1L) {
+                return; // allow any password for empty database.
             }
+        } catch (IOException ex) {
+            Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
         }
-        return NoteBook.BLANK;
-    }
-    
-    static List<String> find(String namePart) throws NoteBook.PasswordExpiredException {
-        List<String> names = new ArrayList<>();
-        for (Note note : getNoteMap().values()) {
-            if (note.fullText().matches(namePart)) {
-                names.add(note.getName());
-            }
+        try {
+            getNoteBook();
+        } catch (PasswordExpiredException ex) {
+            Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
         }
-        return names;
     }
-    
-    static void putNote(Note newNote) throws NoteBook.PasswordExpiredException {
-        Map<String, Note> noteMap = getNoteMap();
-        noteMap.put(newNote.getName(), newNote);
-        commitNoteMap(noteMap);
-    }
-    
+ 
 }

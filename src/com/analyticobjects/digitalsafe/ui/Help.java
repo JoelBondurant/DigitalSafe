@@ -1,4 +1,4 @@
-package com.analyticobjects.digitalsafe;
+package com.analyticobjects.digitalsafe.ui;
 
 /**
  * Help system.
@@ -21,12 +21,6 @@ public class Help {
         commandList.append("RESET - Resets the database. All stored notes will be lost.\n");
         commandList.append("Q, QUIT, EXIT - Exits TextSafe.\n");
         COMMAND_LIST = commandList.toString();
-    }
-    
-   
-    static void printHelp() {
-        DigitalSafe.println("Help:\n");
-        DigitalSafe.println(COMMAND_LIST);
     }
     
 }

@@ -3,12 +3,10 @@ package com.analyticobjects.digitalsafe;
 import com.analyticobjects.digitalsafe.exceptions.InvalidPasswordException;
 import com.analyticobjects.digitalsafe.exceptions.PasswordExpiredException;
 import com.analyticobjects.digitalsafe.containers.NoteBook;
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -20,15 +18,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -50,14 +48,10 @@ final class SecureDatabase {
     
     private static final String DB_NAME = "digitalSafe.safe";
     private static final String KEYGEN = "PBKDF2WithHmacSHA1";
-    // Paddings: PKCS5Padding NoPadding
-    // Note to self: I think I need to do all my own padding.
+    // AES requires PKCS7Padding or better, not PKCS5Padding, so better it is.
     private static final String AES = "AES/CBC/NoPadding";
     private static final int AES_BLOCK_SIZE = 16; // 16 byte (128 bit) blocks.
     private static final int AES_KEY_LENGTH = 128;
-    private static final String BLOWFISH = "Blowfish/CBC/NoPadding";
-    private static final int BLOWFISH_BLOCK_SIZE = 8; // 8 byte (64 bit) blocks.
-    private static final int BLOWFISH_KEY_LENGTH = 128;
     private static final String NOTEBOOK = "noteBook";
 
     
@@ -96,11 +90,7 @@ final class SecureDatabase {
         ensureDB();
         return filePath(DB_NAME).toFile();
     }
-    
-    private static ZipInputStream inZip() throws FileNotFoundException {
-        return new ZipInputStream(new BufferedInputStream(new FileInputStream(dbFile())));
-    }
-    
+       
     private static ZipOutputStream outZip() throws FileNotFoundException {
         return new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(dbFile())));
     }
@@ -157,11 +147,9 @@ final class SecureDatabase {
         return FileSystems.getDefault().getPath(".", fileName);
     }
     
-    private static synchronized SecretKey keyGenAES() throws PasswordExpiredException {
+    private static synchronized SecretKey keyGenAES(byte[] salt, int iterations) throws PasswordExpiredException {
         SecretKey key = null;
         try {
-            byte[] salt = "salty mcbutter salts what what".getBytes();
-            int iterations = 97447;
             SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(KEYGEN);
             PBEKeySpec pbeKeySpec = new PBEKeySpec(DigitalSafe.getInstance().getPassword().toCharArray(), salt, iterations, AES_KEY_LENGTH);
             key = keyFactory.generateSecret(pbeKeySpec);
@@ -172,71 +160,57 @@ final class SecureDatabase {
         return key;
     }
     
-    private static synchronized SecretKey keyGenBlowfish() throws PasswordExpiredException {
-        SecretKey key = null;
-        try {
-            byte[] salt = "fish blows a what what".getBytes();
-            int iterations = 90443;
-            SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(KEYGEN);
-            byte[] digest = MessageDigest.getInstance("SHA-256").digest(DigitalSafe.getInstance().getPassword().getBytes());
-            key = keyFactory.generateSecret(new PBEKeySpec(digest.toString().toCharArray(), salt, iterations, BLOWFISH_KEY_LENGTH));
-            key = new SecretKeySpec(key.getEncoded(), "Blowfish");
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException ex) {
-            Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
-        }
-        return key;
-    }
-    
-    private static IvParameterSpec ivParameterSpec8() {
-        byte[] iv = { 1, 0, 1, 0, 1, 0, 0, 1};
+    private static IvParameterSpec ivParameterSpec16(int level) {
+        byte[] iv = { 1, 0, 30, 1, 0, 0, 90, 1, 0, 0, 10, 0, 20, 0, 1, 70 };
+        iv[level] = 7;
+        iv[level + 1] = 13;
+        iv[level + 2] = 7;
         return new IvParameterSpec(iv);
     }
     
-    private static IvParameterSpec ivParameterSpec16() {
-        byte[] iv = { 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0 };
-        return new IvParameterSpec(iv);
+    private static List<Cipher> cipherList(int mode) throws NoSuchAlgorithmException, NoSuchPaddingException,
+            InvalidKeyException, InvalidAlgorithmParameterException, PasswordExpiredException {
+        Cipher aes1 = Cipher.getInstance(AES);
+        Cipher aes2 = Cipher.getInstance(AES);
+        Cipher aes3 = Cipher.getInstance(AES);
+        aes1.init(mode, keyGenAES("saltyN3SS&Whate".getBytes(), 189213), ivParameterSpec16(1));
+        aes2.init(mode, keyGenAES("saltyN74G@337q8".getBytes(), 239404), ivParameterSpec16(2));
+        aes3.init(mode, keyGenAES("saltyN99!14Ra12".getBytes(), 197781), ivParameterSpec16(3));
+        return Arrays.asList(aes1, aes2, aes3);
     }
     
     private static byte[] decrypt(byte[] encryptedData) throws PasswordExpiredException {
-        byte[] byteHolder1 = null;
-        byte[] byteHolder2;
+        byte[] byteHolder1;
+        byte[] byteHolder2 = null;
         try {
-            SecretKey keyAES = keyGenAES();
-            SecretKey keyBlowfish = keyGenBlowfish();
-            Cipher aes = Cipher.getInstance(AES);
-            Cipher blowfish = Cipher.getInstance(BLOWFISH);
-            aes.init(Cipher.DECRYPT_MODE, keyAES, ivParameterSpec16());
-            blowfish.init(Cipher.DECRYPT_MODE, keyBlowfish, ivParameterSpec8());
-            byteHolder1 = encryptedData; //blowfish.doFinal(encryptedData);
-            byteHolder2 = aes.doFinal(byteHolder1);
-            byteHolder1 = unPad4AES(byteHolder2);
+            List<Cipher> ciphers = cipherList(Cipher.DECRYPT_MODE);
+            byteHolder1 = ciphers.get(2).doFinal(encryptedData);
+            byteHolder2 = ciphers.get(1).doFinal(byteHolder1);
+            byteHolder1 = ciphers.get(0).doFinal(byteHolder2);
+            byteHolder2 = unPad4AES(byteHolder1);
         } catch (IllegalBlockSizeException | NoSuchPaddingException | BadPaddingException | InvalidKeyException ex) {
             Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
         } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException ex) {
             Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
         }
-        return byteHolder1;
+        return byteHolder2;
     }
     
     private static byte[] encrypt(byte[] unencryptedData) throws PasswordExpiredException {
-        byte[] byteHolder1 = null;
-        byte[] byteHolder2;
+        byte[] byteHolder1;
+        byte[] byteHolder2 = null;
         try {
-            SecretKey keyAES = keyGenAES();
-            SecretKey keyBlowfish = keyGenBlowfish();
-            Cipher aes = Cipher.getInstance(AES);
-            Cipher blowfish = Cipher.getInstance(BLOWFISH);
-            aes.init(Cipher.ENCRYPT_MODE, keyAES, ivParameterSpec16());
-            blowfish.init(Cipher.ENCRYPT_MODE, keyBlowfish, ivParameterSpec8());
+            List<Cipher> ciphers = cipherList(Cipher.ENCRYPT_MODE);
             byteHolder1 = pad4AES(unencryptedData);
-            byteHolder2 = aes.doFinal(byteHolder1);
-            byteHolder1 = byteHolder2; //blowfish.doFinal(byteHolder2);
+            byteHolder2 = ciphers.get(0).doFinal(byteHolder1);
+            byteHolder1 = ciphers.get(1).doFinal(byteHolder2);
+            byteHolder2 = ciphers.get(2).doFinal(byteHolder1);
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | BadPaddingException ex) {
             Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
         } catch (IllegalBlockSizeException | InvalidAlgorithmParameterException ex) {
             Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
         }
-        return byteHolder1;
+        return byteHolder2;
     }
     
     private static byte[] unPad4AES(byte[] paddedEncryptedData) throws BadPaddingException {

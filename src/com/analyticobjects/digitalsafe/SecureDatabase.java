@@ -23,6 +23,7 @@ import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
@@ -51,12 +52,14 @@ final class SecureDatabase {
     private static final String KEYGEN = "PBKDF2WithHmacSHA1";
     // Paddings: PKCS5Padding NoPadding
     // Note to self: I think I need to do all my own padding.
-    private static final String AES = "AES/CBC/PKCS5Padding"; // 16 byte (128 bit) blocks.
-    private static final String AES_NOPAD = "AES/CBC/NoPadding"; // 16 byte (128 bit) blocks.
+    private static final String AES = "AES/CBC/NoPadding";
+    private static final int AES_BLOCK_SIZE = 16; // 16 byte (128 bit) blocks.
     private static final int AES_KEY_LENGTH = 128;
-    private static final String BLOWFISH = "Blowfish/CBC/NoPadding"; // 8 byte (64 bit) blocks.
+    private static final String BLOWFISH = "Blowfish/CBC/NoPadding";
+    private static final int BLOWFISH_BLOCK_SIZE = 8; // 8 byte (64 bit) blocks.
     private static final int BLOWFISH_KEY_LENGTH = 128;
     private static final String NOTEBOOK = "noteBook";
+
     
     private SecureDatabase(){}; // no, just no.
     
@@ -163,8 +166,7 @@ final class SecureDatabase {
             PBEKeySpec pbeKeySpec = new PBEKeySpec(DigitalSafe.getInstance().getPassword().toCharArray(), salt, iterations, AES_KEY_LENGTH);
             key = keyFactory.generateSecret(pbeKeySpec);
             key = new SecretKeySpec(key.getEncoded(), "AES");
-            Thread.sleep(100); // Yes, I'm calling sleep in a synchronized block on purpose.
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException | InterruptedException ex) {
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException ex) {
             Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
         }
         return key;
@@ -179,8 +181,7 @@ final class SecureDatabase {
             byte[] digest = MessageDigest.getInstance("SHA-256").digest(DigitalSafe.getInstance().getPassword().getBytes());
             key = keyFactory.generateSecret(new PBEKeySpec(digest.toString().toCharArray(), salt, iterations, BLOWFISH_KEY_LENGTH));
             key = new SecretKeySpec(key.getEncoded(), "Blowfish");
-            Thread.sleep(100); // Yes, I'm calling sleep in a synchronized block on purpose.
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException | InterruptedException ex) {
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException ex) {
             Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
         }
         return key;
@@ -197,28 +198,29 @@ final class SecureDatabase {
     }
     
     private static byte[] decrypt(byte[] encryptedData) throws PasswordExpiredException {
-        byte[] unEncryptedData1;
-        byte[] unEncryptedData2 = null;
+        byte[] byteHolder1 = null;
+        byte[] byteHolder2;
         try {
             SecretKey keyAES = keyGenAES();
             SecretKey keyBlowfish = keyGenBlowfish();
-            Cipher aes = Cipher.getInstance(AES_NOPAD);
+            Cipher aes = Cipher.getInstance(AES);
             Cipher blowfish = Cipher.getInstance(BLOWFISH);
             aes.init(Cipher.DECRYPT_MODE, keyAES, ivParameterSpec16());
             blowfish.init(Cipher.DECRYPT_MODE, keyBlowfish, ivParameterSpec8());
-            unEncryptedData1 = blowfish.doFinal(encryptedData);
-            unEncryptedData2 = aes.doFinal(unEncryptedData1);
+            byteHolder1 = encryptedData; //blowfish.doFinal(encryptedData);
+            byteHolder2 = aes.doFinal(byteHolder1);
+            byteHolder1 = unPad4AES(byteHolder2);
         } catch (IllegalBlockSizeException | NoSuchPaddingException | BadPaddingException | InvalidKeyException ex) {
             Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
         } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException ex) {
             Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
         }
-        return unEncryptedData2;
+        return byteHolder1;
     }
     
     private static byte[] encrypt(byte[] unencryptedData) throws PasswordExpiredException {
-        byte[] encryptedData1;
-        byte[] encryptedData2 = null;
+        byte[] byteHolder1 = null;
+        byte[] byteHolder2;
         try {
             SecretKey keyAES = keyGenAES();
             SecretKey keyBlowfish = keyGenBlowfish();
@@ -226,14 +228,53 @@ final class SecureDatabase {
             Cipher blowfish = Cipher.getInstance(BLOWFISH);
             aes.init(Cipher.ENCRYPT_MODE, keyAES, ivParameterSpec16());
             blowfish.init(Cipher.ENCRYPT_MODE, keyBlowfish, ivParameterSpec8());
-            encryptedData1 = aes.doFinal(unencryptedData);
-            encryptedData2 = blowfish.doFinal(encryptedData1);
+            byteHolder1 = pad4AES(unencryptedData);
+            byteHolder2 = aes.doFinal(byteHolder1);
+            byteHolder1 = byteHolder2; //blowfish.doFinal(byteHolder2);
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | BadPaddingException ex) {
             Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
         } catch (IllegalBlockSizeException | InvalidAlgorithmParameterException ex) {
             Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
         }
-        return encryptedData2;
+        return byteHolder1;
+    }
+    
+    private static byte[] unPad4AES(byte[] paddedEncryptedData) throws BadPaddingException {
+        if (paddedEncryptedData.length == 0) {
+            throw new BadPaddingException();
+        }
+        if ((paddedEncryptedData.length % AES_BLOCK_SIZE) != 0) {
+            throw new BadPaddingException();
+        }
+        byte lastByte = paddedEncryptedData[paddedEncryptedData.length - 1];
+        if ((lastByte < 0) || (lastByte >= AES_BLOCK_SIZE)) {
+            throw new BadPaddingException();
+        }
+        for (int i = 1; i <= (lastByte + AES_BLOCK_SIZE); i++) {
+             byte aByte = paddedEncryptedData[paddedEncryptedData.length - i];
+             if (aByte != lastByte) {
+                 throw new BadPaddingException(); 
+             }
+        }
+        int encryptedSize = paddedEncryptedData.length - lastByte - AES_BLOCK_SIZE;
+        byte[] encryptedData = new byte[encryptedSize];
+        System.arraycopy(paddedEncryptedData, 0, encryptedData, 0, encryptedSize);
+        return encryptedData;
+    }
+
+    /**
+     * Pad unencrypted data for AES / Blowfish blocksize.
+     * @param unencryptedData Raw unencrypted binary to encrypt, of no particular size.
+     * @return Unencrypted binary padded for AES block size. (and Blowfish)
+     */
+    private static byte[] pad4AES(byte[] unencryptedData) {
+        int bytesToPad = AES_BLOCK_SIZE - (unencryptedData.length % AES_BLOCK_SIZE);
+        byte bytesToPadValue = Integer.valueOf(bytesToPad).byteValue();
+        int totalBytes = unencryptedData.length + bytesToPad + AES_BLOCK_SIZE;
+        byte[] paddedUnencryptedData = new byte[totalBytes];
+        System.arraycopy(unencryptedData, 0, paddedUnencryptedData, 0, unencryptedData.length);
+        Arrays.fill(paddedUnencryptedData, unencryptedData.length, totalBytes, bytesToPadValue);
+        return paddedUnencryptedData;
     }
     
     static void validatePassword() throws InvalidPasswordException {

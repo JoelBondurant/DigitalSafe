@@ -65,6 +65,10 @@ public class DigitalSafe {
         return this.password;
     }
     
+    public boolean isUnlocked() {
+        return !this.password.isEmpty();
+    }
+    
     private void validatePassword(String password) throws InvalidPasswordException {
         if (password == null || password.length() < 6) {
             throw new InvalidPasswordException();
@@ -124,6 +128,9 @@ public class DigitalSafe {
         SecureDatabase.reset();
     }
     
+    NoteBook getNoteBook() throws PasswordExpiredException {
+        return SecureDatabase.getNoteBook();
+    }
 
     
 }

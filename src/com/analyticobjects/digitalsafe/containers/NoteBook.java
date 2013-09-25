@@ -20,14 +20,19 @@ public class NoteBook implements Serializable {
     private final List<FileNote> fileNotes;
     
     
-    private NoteBook() {
+    public NoteBook() {
         this.notes = new ArrayList<>();
         this.passwordNotes = new ArrayList<>();
         this.pictureNotes = new ArrayList<>();
         this.fileNotes = new ArrayList<>();
     }
     
-
-
+    public void addNote(Note aNote) {
+        this.notes.add(aNote);
+    }
+    
+    public void addPasswordNote(PasswordNote aPasswordNote) {
+        this.passwordNotes.add(aPasswordNote);
+    }
 
 }

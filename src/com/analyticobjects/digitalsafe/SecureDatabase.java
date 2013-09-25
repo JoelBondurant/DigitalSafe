@@ -3,10 +3,16 @@ package com.analyticobjects.digitalsafe;
 import com.analyticobjects.digitalsafe.exceptions.InvalidPasswordException;
 import com.analyticobjects.digitalsafe.exceptions.PasswordExpiredException;
 import com.analyticobjects.digitalsafe.containers.NoteBook;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.file.FileSystems;
@@ -19,6 +25,10 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -38,12 +48,12 @@ import javax.crypto.spec.SecretKeySpec;
 final class SecureDatabase {
     
     private static final String FILE_NAME = "digitalSafe.safe";
-    private static final String SWAP_NAME = "digitalSafe.swap";
     private static final String KEYGEN = "PBKDF2WithHmacSHA1";
     private static final String AES = "AES/CBC/PKCS5Padding";
     private static final int AES_KEY_LENGTH = 128;
     private static final String BLOWFISH = "Blowfish/CBC/PKCS5Padding";
     private static final int BLOWFISH_KEY_LENGTH = 128;
+    private static final String NOTEBOOK = "noteBook";
     
     private SecureDatabase(){}; // no, just no.
     
@@ -61,12 +71,10 @@ final class SecureDatabase {
     
     static void prepFiles() {
         prepDB(FILE_NAME);
-        prepDB(SWAP_NAME);
     }
     
     static void reset() {
         resetDB(FILE_NAME);
-        resetDB(SWAP_NAME);
     }
     
     private static void resetDB(String name) {
@@ -78,12 +86,29 @@ final class SecureDatabase {
         prepDB(name);
     }
     
+    private static ZipInputStream inZip() throws FileNotFoundException {
+        return new ZipInputStream(new BufferedInputStream(new FileInputStream(filePath(FILE_NAME).toFile())));
+    }
+    
+    private static ZipOutputStream outZip() throws FileNotFoundException {
+        return new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(filePath(FILE_NAME).toFile())));
+    }
+    
+    private static ZipFile zipFile() throws IOException {
+        return new ZipFile(filePath(FILE_NAME).toFile());
+    }
+    
     static NoteBook getNoteBook() throws PasswordExpiredException {
-        NoteBook notebook = null;
-        try {
-            byte[] digiSafe = decrypt(Files.readAllBytes(filePath(FILE_NAME)));
-            ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(digiSafe));
-            notebook = (NoteBook) ois.readObject();
+        NoteBook notebook = new NoteBook();
+        try (
+                ZipFile zipFile = zipFile();
+                InputStream noteBookInStream = zipFile.getInputStream(zipFile.getEntry(NOTEBOOK));
+            ) {
+            byte[] encryptedNoteBook = ByteUtility.readFully(noteBookInStream);
+            byte[] decryptedNoteBook = decrypt(encryptedNoteBook);
+            try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(decryptedNoteBook))) {
+                notebook = (NoteBook) ois.readObject();
+            }
         } catch (IOException | ClassNotFoundException ex) {
             Logger.getLogger(SecureDatabase.class.getName()).log(Level.FINEST, ex.getLocalizedMessage(), ex);
         }
@@ -91,14 +116,18 @@ final class SecureDatabase {
     }
     
     static void commitNoteBook(NoteBook noteBook) throws PasswordExpiredException {
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
+        try (
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                ObjectOutputStream oos = new ObjectOutputStream(bos);
+                ZipOutputStream zipOut =  outZip();
+            ) {
             oos.writeObject(noteBook);
             oos.flush();
-            byte[] textSafe = encrypt(bos.toByteArray());
-            Files.write(filePath(FILE_NAME), textSafe);
-            Files.write(filePath(SWAP_NAME), textSafe);
+            byte[] encryptedNoteBook = encrypt(bos.toByteArray());
+            zipOut.putNextEntry(new ZipEntry(NOTEBOOK));
+            zipOut.write(encryptedNoteBook);
+            zipOut.closeEntry();
+            zipOut.close();
         } catch (IOException ex) {
             Logger.getLogger(SecureDatabase.class.getName()).log(Level.FINEST, ex.getLocalizedMessage(), ex);
         }

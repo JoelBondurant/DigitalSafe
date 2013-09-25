@@ -1,5 +1,7 @@
 package com.analyticobjects.digitalsafe.ui;
 
+import com.analyticobjects.digitalsafe.containers.Note;
+
 /**
  * Note panel for display, editing, creation of simple notes.
  * @author Joel Bondurant
@@ -24,25 +26,25 @@ public class NotePanel extends javax.swing.JPanel {
     private void initComponents() {
 
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTextArea1 = new javax.swing.JTextArea();
+        messageField = new javax.swing.JTextArea();
         titleLabel = new javax.swing.JLabel();
-        jTextField1 = new javax.swing.JTextField();
-        jLabel1 = new javax.swing.JLabel();
+        titleField = new javax.swing.JTextField();
+        versionLabel = new javax.swing.JLabel();
         tagsLabel = new javax.swing.JLabel();
-        jTextField2 = new javax.swing.JTextField();
+        tagsField = new javax.swing.JTextField();
         messageLabel = new javax.swing.JLabel();
         createdLabel = new javax.swing.JLabel();
         modifiedLabel = new javax.swing.JLabel();
         filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 6), new java.awt.Dimension(0, 6), new java.awt.Dimension(32767, 6));
 
-        jTextArea1.setColumns(20);
-        jTextArea1.setRows(5);
-        jScrollPane1.setViewportView(jTextArea1);
+        messageField.setColumns(20);
+        messageField.setRows(5);
+        jScrollPane1.setViewportView(messageField);
 
         titleLabel.setText("Title");
         titleLabel.setToolTipText("");
 
-        jLabel1.setText("Version");
+        versionLabel.setText("Version");
 
         tagsLabel.setText("Tags");
         tagsLabel.setToolTipText("");
@@ -65,20 +67,20 @@ public class NotePanel extends javax.swing.JPanel {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(tagsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jTextField2))
+                        .addComponent(tagsField))
                     .addComponent(createdLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(messageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1)
+                        .addComponent(versionLabel)
                         .addGap(157, 157, 157)
                         .addComponent(filler1, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(titleLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(titleField, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(75, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -88,11 +90,11 @@ public class NotePanel extends javax.swing.JPanel {
                     .addComponent(filler1, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
-                        .addComponent(jLabel1)))
+                        .addComponent(versionLabel)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(titleLabel)
-                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(titleField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(messageLabel)
@@ -100,7 +102,7 @@ public class NotePanel extends javax.swing.JPanel {
                 .addGap(13, 13, 13)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(tagsLabel)
-                    .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(tagsField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addComponent(createdLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -113,14 +115,31 @@ public class NotePanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel createdLabel;
     private javax.swing.Box.Filler filler1;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTextArea jTextArea1;
-    private javax.swing.JTextField jTextField1;
-    private javax.swing.JTextField jTextField2;
+    private javax.swing.JTextArea messageField;
     private javax.swing.JLabel messageLabel;
     private javax.swing.JLabel modifiedLabel;
+    private javax.swing.JTextField tagsField;
     private javax.swing.JLabel tagsLabel;
+    private javax.swing.JTextField titleField;
     private javax.swing.JLabel titleLabel;
+    private javax.swing.JLabel versionLabel;
     // End of variables declaration//GEN-END:variables
+
+    Note toNote() {
+        String title = this.titleField.getText();
+        String message = this.messageField.getText();
+        Note aNote = new Note(title, message);
+        String tagsRaw = this.tagsField.getText();
+        aNote.tagWithTagString(tagsRaw);
+        return aNote;
+    }
+    
+    void fromNote(Note aNote) {
+        this.titleField.setText(aNote.getTitle());
+        this.messageField.setText(aNote.getMessage());
+        this.createdLabel.setText(this.createdLabel.getText() + ": " + aNote.getCreateTime().toString());
+        this.modifiedLabel.setText(this.modifiedLabel.getText() + ": " + aNote.getUpdateTime().toString());
+        this.versionLabel.setText(this.versionLabel.getText() + " v" + aNote.getVersion());
+    }
 }

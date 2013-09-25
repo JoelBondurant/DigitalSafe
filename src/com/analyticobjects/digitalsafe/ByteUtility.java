@@ -55,11 +55,17 @@ public class ByteUtility {
 	}
 
         
-        public static byte[] readFully(InputStream input) throws IOException {
+        /**
+         * Read all bytes from an input stream into a byte array.
+         * @param inputStream Any input stream of bytes.
+         * @return The byte array representation of the input stream.
+         * @throws IOException 
+         */
+        public static byte[] readFully(InputStream inputStream) throws IOException {
             byte[] buffer = new byte[8192];
             int bytesRead;
             ByteArrayOutputStream output = new ByteArrayOutputStream();
-            while ((bytesRead = input.read(buffer)) != -1)
+            while ((bytesRead = inputStream.read(buffer)) != -1)
             {
                 output.write(buffer, 0, bytesRead);
             }

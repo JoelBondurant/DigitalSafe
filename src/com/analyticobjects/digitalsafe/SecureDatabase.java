@@ -47,17 +47,20 @@ import javax.crypto.spec.SecretKeySpec;
  */
 final class SecureDatabase {
     
-    private static final String FILE_NAME = "digitalSafe.safe";
+    private static final String DB_NAME = "digitalSafe.safe";
     private static final String KEYGEN = "PBKDF2WithHmacSHA1";
-    private static final String AES = "AES/CBC/PKCS5Padding";
+    // Paddings: PKCS5Padding NoPadding
+    // Note to self: I think I need to do all my own padding.
+    private static final String AES = "AES/CBC/PKCS5Padding"; // 16 byte (128 bit) blocks.
+    private static final String AES_NOPAD = "AES/CBC/NoPadding"; // 16 byte (128 bit) blocks.
     private static final int AES_KEY_LENGTH = 128;
-    private static final String BLOWFISH = "Blowfish/CBC/PKCS5Padding";
+    private static final String BLOWFISH = "Blowfish/CBC/NoPadding"; // 8 byte (64 bit) blocks.
     private static final int BLOWFISH_KEY_LENGTH = 128;
     private static final String NOTEBOOK = "noteBook";
     
     private SecureDatabase(){}; // no, just no.
     
-    private static void prepDB(String name) {
+    private static void ensureFile(String name) {
         Path dbPath = filePath(name);
         File dbFile = dbPath.toFile();
         if (!dbFile.exists()) {
@@ -69,37 +72,50 @@ final class SecureDatabase {
         }
     }
     
-    static void prepFiles() {
-        prepDB(FILE_NAME);
+    static void ensureDB() {
+        ensureFile(DB_NAME);
     }
     
     static void reset() {
-        resetDB(FILE_NAME);
+        resetDB();
     }
     
-    private static void resetDB(String name) {
-        Path dbPath = filePath(name);
+    private static void resetDB() {
+        Path dbPath = filePath(DB_NAME);
         File dbFile = dbPath.toFile();
         if (dbFile.exists()) {
             dbFile.delete();
         }
-        prepDB(name);
+        ensureDB();
+    }
+    
+    private static File dbFile() {
+        ensureDB();
+        return filePath(DB_NAME).toFile();
     }
     
     private static ZipInputStream inZip() throws FileNotFoundException {
-        return new ZipInputStream(new BufferedInputStream(new FileInputStream(filePath(FILE_NAME).toFile())));
+        return new ZipInputStream(new BufferedInputStream(new FileInputStream(dbFile())));
     }
     
     private static ZipOutputStream outZip() throws FileNotFoundException {
-        return new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(filePath(FILE_NAME).toFile())));
+        return new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(dbFile())));
     }
     
     private static ZipFile zipFile() throws IOException {
-        return new ZipFile(filePath(FILE_NAME).toFile());
+        return new ZipFile(dbFile());
     }
     
     static NoteBook getNoteBook() throws PasswordExpiredException {
-        NoteBook notebook = new NoteBook();
+        NoteBook notebook = null;
+        ensureDB();
+        try {
+            if (Files.size(dbFile().toPath()) < 1L) {
+                return new NoteBook(); // only make a new NoteBook for empty db.
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(SecureDatabase.class.getName()).log(Level.FINEST, ex.getLocalizedMessage(), ex);
+        }
         try (
                 ZipFile zipFile = zipFile();
                 InputStream noteBookInStream = zipFile.getInputStream(zipFile.getEntry(NOTEBOOK));
@@ -110,7 +126,7 @@ final class SecureDatabase {
                 notebook = (NoteBook) ois.readObject();
             }
         } catch (IOException | ClassNotFoundException ex) {
-            Logger.getLogger(SecureDatabase.class.getName()).log(Level.FINEST, ex.getLocalizedMessage(), ex);
+            Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
         }
         return notebook;
     }
@@ -126,6 +142,7 @@ final class SecureDatabase {
             byte[] encryptedNoteBook = encrypt(bos.toByteArray());
             zipOut.putNextEntry(new ZipEntry(NOTEBOOK));
             zipOut.write(encryptedNoteBook);
+            zipOut.flush();
             zipOut.closeEntry();
             zipOut.close();
         } catch (IOException ex) {
@@ -183,14 +200,14 @@ final class SecureDatabase {
         byte[] unEncryptedData1;
         byte[] unEncryptedData2 = null;
         try {
-            Cipher aes = Cipher.getInstance(AES);
             SecretKey keyAES = keyGenAES();
-            aes.init(Cipher.DECRYPT_MODE, keyAES, ivParameterSpec16());
-            unEncryptedData1 = aes.doFinal(encryptedData);
-            Cipher blowfish = Cipher.getInstance(BLOWFISH);
             SecretKey keyBlowfish = keyGenBlowfish();
+            Cipher aes = Cipher.getInstance(AES_NOPAD);
+            Cipher blowfish = Cipher.getInstance(BLOWFISH);
+            aes.init(Cipher.DECRYPT_MODE, keyAES, ivParameterSpec16());
             blowfish.init(Cipher.DECRYPT_MODE, keyBlowfish, ivParameterSpec8());
-            unEncryptedData2 = blowfish.doFinal(unEncryptedData1);
+            unEncryptedData1 = blowfish.doFinal(encryptedData);
+            unEncryptedData2 = aes.doFinal(unEncryptedData1);
         } catch (IllegalBlockSizeException | NoSuchPaddingException | BadPaddingException | InvalidKeyException ex) {
             Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
         } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException ex) {
@@ -203,12 +220,14 @@ final class SecureDatabase {
         byte[] encryptedData1;
         byte[] encryptedData2 = null;
         try {
-            Cipher blowfish = Cipher.getInstance(BLOWFISH);
-            blowfish.init(Cipher.ENCRYPT_MODE, keyGenBlowfish(), ivParameterSpec8());
-            encryptedData1 = blowfish.doFinal(unencryptedData);
+            SecretKey keyAES = keyGenAES();
+            SecretKey keyBlowfish = keyGenBlowfish();
             Cipher aes = Cipher.getInstance(AES);
-            aes.init(Cipher.ENCRYPT_MODE, keyGenAES(), ivParameterSpec16());
-            encryptedData2 = aes.doFinal(encryptedData1);
+            Cipher blowfish = Cipher.getInstance(BLOWFISH);
+            aes.init(Cipher.ENCRYPT_MODE, keyAES, ivParameterSpec16());
+            blowfish.init(Cipher.ENCRYPT_MODE, keyBlowfish, ivParameterSpec8());
+            encryptedData1 = aes.doFinal(unencryptedData);
+            encryptedData2 = blowfish.doFinal(encryptedData1);
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | BadPaddingException ex) {
             Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
         } catch (IllegalBlockSizeException | InvalidAlgorithmParameterException ex) {
@@ -219,7 +238,7 @@ final class SecureDatabase {
     
     static void validatePassword() throws InvalidPasswordException {
         try {
-            if (Files.size(filePath(FILE_NAME)) < 1L) {
+            if (Files.size(dbFile().toPath()) < 1L) {
                 return; // allow any password for empty database.
             }
         } catch (IOException ex) {

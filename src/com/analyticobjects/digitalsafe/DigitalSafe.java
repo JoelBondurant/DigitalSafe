@@ -32,15 +32,15 @@ public class DigitalSafe {
     
     static final String RESET = "RESET";
     private final String PASSWORD_SALT = "abcDEF1234!@#$";
-    private static final Level LOGGING_LEVEL = Level.INFO;
+    private static final Level LOGGING_LEVEL = Level.ALL;
     
     
     private DigitalSafe() {
         this.setLoggingLevelGlobally(LOGGING_LEVEL);
         this.executor = Executors.newSingleThreadScheduledExecutor();
         this.password = BLANK;
-        this.secondsToCachePassword = 120;
-        SecureDatabase.prepFiles();
+        this.secondsToCachePassword = 60*5;
+        SecureDatabase.ensureDB();
     }
     
     public static final synchronized DigitalSafe getInstance() {
@@ -77,12 +77,12 @@ public class DigitalSafe {
     
     public void setPassword(String password) throws InvalidPasswordException {
         validatePassword(password);
+        this.executor.schedule(new BlankPasswordTask(), secondsToCachePassword, TimeUnit.SECONDS);
         StringBuilder sb = new StringBuilder(password);
-        sb.append(PASSWORD_SALT);
+        sb.append(PASSWORD_SALT); // hash the shizzle dizzle out of the password...
         sb.append(sb.toString().toLowerCase());
         sb.append(sb.toString().toUpperCase());
         sb.append(sb.reverse().toString());
-        this.executor.schedule(new BlankPasswordTask(), secondsToCachePassword, TimeUnit.SECONDS);
         try {
             MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
             MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
@@ -124,12 +124,16 @@ public class DigitalSafe {
         }
     }
 
-    void reset() {
+    public void reset() {
         SecureDatabase.reset();
     }
     
-    NoteBook getNoteBook() throws PasswordExpiredException {
+    public static NoteBook getNoteBook() throws PasswordExpiredException {
         return SecureDatabase.getNoteBook();
+    }
+    
+    public void commitNoteBook(NoteBook noteBook) throws PasswordExpiredException {
+        SecureDatabase.commitNoteBook(noteBook);
     }
 
     

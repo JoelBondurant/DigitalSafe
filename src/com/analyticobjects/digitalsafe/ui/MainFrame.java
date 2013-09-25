@@ -1,11 +1,12 @@
 package com.analyticobjects.digitalsafe.ui;
 
 import com.analyticobjects.digitalsafe.DigitalSafe;
+import com.analyticobjects.digitalsafe.containers.Note;
 import com.analyticobjects.digitalsafe.exceptions.InvalidPasswordException;
-import java.awt.BorderLayout;
+import com.analyticobjects.digitalsafe.exceptions.PasswordExpiredException;
+import java.awt.Component;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JPanel;
 
 /**
  * Some 1980's style ui.
@@ -224,17 +225,22 @@ public class MainFrame extends javax.swing.JFrame {
             digiSafe.setPassword(new String(password));
             this.passphrasePanel.setVisible(false);
         } catch (InvalidPasswordException ex) {
-            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
         }
     }//GEN-LAST:event_passphraseFieldActionPerformed
 
     private void commandFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_commandFieldActionPerformed
-        String command = this.commandField.getText();
+        String command = this.commandField.getText().trim();
         String contextString = this.tabbedPane1.getTitleAt(this.tabbedPane1.getSelectedIndex());
         Context context = Context.valueOf(contextString);
         this.commandField.setText("");
         if (digiSafe.isUnlocked()) { //executing commands on a locked safe will just throw exceptions.
-            Commands.execute(command, context);
+            try {
+                Commands.execute(command, context);
+            } catch (PasswordExpiredException ex) {
+                Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
+                this.passphrasePanel.setVisible(true);
+            }
         } else {
             this.passphrasePanel.setVisible(true);
         }
@@ -275,12 +281,23 @@ public class MainFrame extends javax.swing.JFrame {
         });
     }
     
-    synchronized void addNotesPanel(NotePanel notePanel) {
-        notePanel.setVisible(true);
+    synchronized void setNotesPanel(NotePanel notePanel) {
         this.notesPanel.removeAll();
-        this.notesPanel.add(notePanel);
+        if (notePanel != null) {
+            notePanel.setVisible(true);
+            this.notesPanel.add(notePanel);
+        }
         this.notesPanel.revalidate();
         this.notesPanel.repaint();
+    }
+    
+    Note getNoteFromNotePanel() {
+        Component component = this.notesPanel.getComponent(0);
+        if (component instanceof NotePanel) {
+            NotePanel notePanel = (NotePanel) component;
+            return notePanel.toNote();
+        }
+        return null;
     }
     
     public enum Context {Notes, Passwords, Pictures, Files}

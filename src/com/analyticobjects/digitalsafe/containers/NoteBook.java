@@ -35,4 +35,13 @@ public class NoteBook implements Serializable {
         this.passwordNotes.add(aPasswordNote);
     }
 
+    public Note getByTitle(String title) {
+        for (Note note : notes) {
+            if (note.getTitle().toLowerCase().equals(title.toLowerCase())) {
+                return note;
+            }
+        }
+        return null;
+    }
+
 }

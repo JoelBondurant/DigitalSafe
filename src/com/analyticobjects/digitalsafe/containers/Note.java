@@ -10,13 +10,10 @@ import java.util.Set;
  * @author Joel Bondurant
  * @since 2013.08
  */
-class Note implements Serializable {
+public class Note implements Serializable {
     
-    static final String PUT = "PUT";
-    static final String GET = "GET";
-    static final String FIND = "FIND";
-    static final String DELETE = "DELETE";
     static final String VERSION = "1";
+    public static final String TAG_DELIMITER = ",";
     
     private final String version;
     private String title;
@@ -25,7 +22,7 @@ class Note implements Serializable {
     private final Date createTime;
     private Date updateTime;
     
-    Note(String title, String message) {
+    public Note(String title, String message) {
         this.version = VERSION;
         this.title = title;
         this.message = message;
@@ -34,33 +31,45 @@ class Note implements Serializable {
         this.updateTime = new Date();
     }
     
-    void setTitle(String title) {
+    public Date getCreateTime() {
+        return (Date) this.createTime.clone();
+    }
+    
+    public Date getUpdateTime() {
+        return (Date) this.updateTime.clone();
+    }
+    
+    public String getVersion() {
+        return this.version;
+    }
+    
+    public void setTitle(String title) {
         updateTime();
         this.title = title;
     }
     
-    String getTitle() {
+    public String getTitle() {
         return this.title;
     }
     
-    void setMessage(String message) {
+    public void setMessage(String message) {
         updateTime();
         this.message = message;
     }
     
-    String getMessage() {
+    public String getMessage() {
         return this.message;
     }
     
-    void updateTime() {
+    private void updateTime() {
         this.updateTime = new Date();
     }
     
-    Set<String> getTags() {
+    public Set<String> getTags() {
         return this.tags;
     }
     
-    String getTagString() {
+    public String getTagString() {
         if (this.tags.isEmpty()) {
             return "";
         }
@@ -72,12 +81,20 @@ class Note implements Serializable {
         return sb.substring(0, sb.length() - 2).toString();
     }
     
-    void tag(String aTag) {
+    public void tagWithTagString(String tags) {
+        updateTime();
+        this.tags.clear();
+        for (String tag : tags.split(TAG_DELIMITER)) {
+            this.tags.add(tag);
+        }
+    }
+    
+    public void tag(String aTag) {
         updateTime();
         this.tags.add(aTag);
     }
     
-    boolean unTag(String aTag) {
+    public boolean unTag(String aTag) {
         if (this.tags.remove(aTag)) {
             updateTime();
             return true;
@@ -85,7 +102,7 @@ class Note implements Serializable {
         return false;
     }
     
-    String fullText() {
+    public String fullText() {
         StringBuilder sb = new StringBuilder();
         sb.append(this.title);
         sb.append(" ");

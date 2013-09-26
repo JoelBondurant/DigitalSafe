@@ -1,14 +1,11 @@
 Note - title, message, tags, createTime, updateTime
 PasswordNote(Note) - userName, password, url, expirationTime
-FileNote(Note) - fileName, fileContents
-PictureNote(FileNote) - 
+FileNote(Note) - fileName, indexToFiles
+PictureNote(FileNote) - indexToFiles
 
 DigitalSafe
-    TableOfContents
-    Notebook
-    PasswordBook
-    PictureBook
-    FileBook
+    NoteBook (Files/Pictures fully indexed in NoteBook)
+    Files/ (Flat)
 
 
 password generation by pattern

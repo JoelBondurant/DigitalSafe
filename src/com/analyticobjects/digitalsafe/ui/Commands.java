@@ -22,12 +22,17 @@ public class Commands {
             case "clean":
             case "reset": {
                 DigitalSafe.getInstance().reset();
+                MainFrame.getInstance().lock();
                 break;
             }
             case "q":
             case "quit":
             case "exit": {
                 System.exit(0);
+                break;
+            }
+            case "lock": {
+                MainFrame.getInstance().lock();
                 break;
             }
         }
@@ -48,7 +53,7 @@ public class Commands {
         } else if (command.equals("save")) {
             Note noteToSave = MainFrame.getInstance().getNoteFromNotePanel();
             NoteBook noteBook = DigitalSafe.getNoteBook();
-            noteBook.addNote(noteToSave);
+            noteBook.putNote(noteToSave);
             DigitalSafe.getInstance().commitNoteBook(noteBook);
             MainFrame.getInstance().setNotesPanel(null);
         } else if (command.startsWith("get ") || command.startsWith("load ") || command.startsWith("open ")) {

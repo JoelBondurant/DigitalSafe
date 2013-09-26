@@ -1,6 +1,7 @@
 package com.analyticobjects.digitalsafe.containers;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -15,20 +16,35 @@ public class Note implements Serializable {
     static final String VERSION = "1";
     public static final String TAG_DELIMITER = ",";
     
+    private int id;
     private final String version;
     private String title;
     private String message;
-    private Set<String> tags;
+    private final Set<String> tags;
     private final Date createTime;
     private Date updateTime;
     
     public Note(String title, String message) {
+        this.id = -1;
         this.version = VERSION;
         this.title = title;
         this.message = message;
         this.tags = new HashSet<>();
         this.createTime = new Date();
         this.updateTime = new Date();
+    }
+    
+    public boolean needsId() {
+        return (this.id == -1);
+    }
+    
+    public int getId() {
+        return this.id;
+    }
+    
+    public void setId(int id) {
+        updateTime();
+        this.id = id;
     }
     
     public Date getCreateTime() {
@@ -61,12 +77,12 @@ public class Note implements Serializable {
         return this.message;
     }
     
-    private void updateTime() {
+    void updateTime() {
         this.updateTime = new Date();
     }
     
     public Set<String> getTags() {
-        return this.tags;
+        return Collections.unmodifiableSet(this.tags);
     }
     
     public String getTagString() {
@@ -85,17 +101,17 @@ public class Note implements Serializable {
         updateTime();
         this.tags.clear();
         for (String tag : tags.split(TAG_DELIMITER)) {
-            this.tags.add(tag);
+            this.tags.add(tag.trim());
         }
     }
     
     public void tag(String aTag) {
         updateTime();
-        this.tags.add(aTag);
+        this.tags.add(aTag.trim());
     }
     
     public boolean unTag(String aTag) {
-        if (this.tags.remove(aTag)) {
+        if (this.tags.remove(aTag.trim())) {
             updateTime();
             return true;
         }
@@ -109,7 +125,27 @@ public class Note implements Serializable {
         sb.append(this.getTagString());
         sb.append(" ");
         sb.append(this.message);
+        sb.append(" ");
+        sb.append(this.createTime.toString());
+        sb.append(" ");
+        sb.append(this.updateTime.toString());
         return sb.toString();
     }
     
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof Note)) {
+            return false;
+        }
+        Note other = ((Note) obj);
+        return ((this.id == other.id) && (this.getClass().equals(other.getClass())));
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 59 * hash + this.id;
+        return hash;
+    }
 }

@@ -24,6 +24,7 @@ public class MainFrame extends javax.swing.JFrame {
     private MainFrame() {
         digiSafe = DigitalSafe.getInstance();
         initComponents();
+        lock();
     }
     
     public static synchronized MainFrame getInstance() {
@@ -87,7 +88,7 @@ public class MainFrame extends javax.swing.JFrame {
         );
         passwordsPanelLayout.setVerticalGroup(
             passwordsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 477, Short.MAX_VALUE)
+            .addGap(0, 471, Short.MAX_VALUE)
         );
 
         tabbedPane1.addTab("Passwords", passwordsPanel);
@@ -100,7 +101,7 @@ public class MainFrame extends javax.swing.JFrame {
         );
         picturesPanelLayout.setVerticalGroup(
             picturesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 477, Short.MAX_VALUE)
+            .addGap(0, 471, Short.MAX_VALUE)
         );
 
         tabbedPane1.addTab("Pictures", picturesPanel);
@@ -113,7 +114,7 @@ public class MainFrame extends javax.swing.JFrame {
         );
         filesPanelLayout.setVerticalGroup(
             filesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 477, Short.MAX_VALUE)
+            .addGap(0, 471, Short.MAX_VALUE)
         );
 
         tabbedPane1.addTab("Files", filesPanel);
@@ -133,10 +134,10 @@ public class MainFrame extends javax.swing.JFrame {
             passphrasePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(passphrasePanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(passphraseLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 97, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(passphraseField, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addComponent(passphraseLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(passphraseField, javax.swing.GroupLayout.PREFERRED_SIZE, 292, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(27, Short.MAX_VALUE))
         );
         passphrasePanelLayout.setVerticalGroup(
             passphrasePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -144,7 +145,7 @@ public class MainFrame extends javax.swing.JFrame {
                 .addGroup(passphrasePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(passphraseLabel)
                     .addComponent(passphraseField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(0, 0, Short.MAX_VALUE))
+                .addGap(0, 13, Short.MAX_VALUE))
         );
 
         searchCommandLabel.setText("Command Line:");
@@ -162,8 +163,7 @@ public class MainFrame extends javax.swing.JFrame {
             .addGroup(commandPanelLayout.createSequentialGroup()
                 .addComponent(searchCommandLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(commandField, javax.swing.GroupLayout.PREFERRED_SIZE, 328, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(18, Short.MAX_VALUE))
+                .addComponent(commandField))
         );
         commandPanelLayout.setVerticalGroup(
             commandPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
@@ -182,28 +182,24 @@ public class MainFrame extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(commandPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(tabbedPane1)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(tabbedPane1)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(titleLabel)
-                                .addGap(38, 38, 38)
-                                .addComponent(passphrasePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE)))
-                        .addContainerGap())))
+                        .addComponent(titleLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(passphrasePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(commandPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(titleLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
-                        .addComponent(passphrasePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(passphrasePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(commandPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tabbedPane1)
@@ -215,6 +211,19 @@ public class MainFrame extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    public final void lock() {
+        digiSafe.lock();
+        this.passphrasePanel.setVisible(true);
+        this.tabbedPane1.setVisible(false);
+        this.commandPanel.setVisible(false);
+    }
+    
+    public void unlock() {
+        this.passphrasePanel.setVisible(false);
+        this.tabbedPane1.setVisible(true);
+        this.commandPanel.setVisible(true);
+    }
+    
     private void passphraseFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_passphraseFieldActionPerformed
         char[] password = this.passphraseField.getPassword();
         if (password.length < 6) {
@@ -223,7 +232,7 @@ public class MainFrame extends javax.swing.JFrame {
         this.passphraseField.setText("");
         try {
             digiSafe.setPassword(new String(password));
-            this.passphrasePanel.setVisible(false);
+            unlock();
         } catch (InvalidPasswordException ex) {
             Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
         }

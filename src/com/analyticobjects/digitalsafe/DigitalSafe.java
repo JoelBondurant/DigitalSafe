@@ -69,6 +69,10 @@ public class DigitalSafe {
         return !this.password.isEmpty();
     }
     
+    public void lock() {
+        this.blankPassword();
+    }
+    
     private void validatePassword(String password) throws InvalidPasswordException {
         if (password == null || password.length() < 6) {
             throw new InvalidPasswordException();

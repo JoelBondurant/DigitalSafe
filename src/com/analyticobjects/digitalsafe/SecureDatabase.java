@@ -147,11 +147,17 @@ final class SecureDatabase {
         return FileSystems.getDefault().getPath(".", fileName);
     }
     
-    private static synchronized SecretKey keyGenAES(byte[] salt, int iterations) throws PasswordExpiredException {
+    private static synchronized SecretKey keyGenAES(String saltString, int iterations) throws PasswordExpiredException {
         SecretKey key = null;
         try {
             SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(KEYGEN);
-            PBEKeySpec pbeKeySpec = new PBEKeySpec(DigitalSafe.getInstance().getPassword().toCharArray(), salt, iterations, AES_KEY_LENGTH);
+            String password = DigitalSafe.getInstance().getPassword();
+            byte[] passwordBytes = password.getBytes();
+            byte[] salt = saltString.getBytes();
+            salt[1] = passwordBytes[2]; // salting the salt.
+            salt[2] = passwordBytes[1];
+            salt[3] = (byte)(0xff & (passwordBytes[3] ^ passwordBytes[4]));
+            PBEKeySpec pbeKeySpec = new PBEKeySpec(password.toCharArray(), salt, iterations, AES_KEY_LENGTH);
             key = keyFactory.generateSecret(pbeKeySpec);
             key = new SecretKeySpec(key.getEncoded(), "AES");
         } catch (NoSuchAlgorithmException | InvalidKeySpecException ex) {
@@ -160,11 +166,16 @@ final class SecureDatabase {
         return key;
     }
     
-    private static IvParameterSpec ivParameterSpec16(int level) {
-        byte[] iv = { 1, 0, 30, 1, 0, 0, 90, 1, 0, 0, 10, 0, 20, 0, 1, 70 };
-        iv[level] = 7;
-        iv[level + 1] = 13;
-        iv[level + 2] = 7;
+    private static IvParameterSpec ivParameterSpec16(int level) throws PasswordExpiredException {
+        byte[] iv = { 1, 1, 30, 1, 0, 2, 90, 1, 0, 2, 13, 0, 20, 0, 1, 70 };
+        byte[] passwordBytes = DigitalSafe.getInstance().getPassword().getBytes();
+        iv[level] = passwordBytes[0]; // swizzleness...
+        iv[level + 1] = passwordBytes[1];
+        iv[level + 3] = passwordBytes[2];
+        iv[level + 5] = (byte)(0xff & (passwordBytes[1] ^ passwordBytes[3]));
+        iv[level + 7] = passwordBytes[4];
+        iv[level + 10] = passwordBytes[5];
+        iv[level + 11] = (byte)(0xff & (passwordBytes[3] ^ passwordBytes[5]));
         return new IvParameterSpec(iv);
     }
     
@@ -173,9 +184,9 @@ final class SecureDatabase {
         Cipher aes1 = Cipher.getInstance(AES);
         Cipher aes2 = Cipher.getInstance(AES);
         Cipher aes3 = Cipher.getInstance(AES);
-        aes1.init(mode, keyGenAES("saltyN3SS&Whate".getBytes(), 189213), ivParameterSpec16(1));
-        aes2.init(mode, keyGenAES("saltyN74G@337q8".getBytes(), 239404), ivParameterSpec16(2));
-        aes3.init(mode, keyGenAES("saltyN99!14Ra12".getBytes(), 197781), ivParameterSpec16(3));
+        aes1.init(mode, keyGenAES("saltyN3SS&Whate", 189213), ivParameterSpec16(1));
+        aes2.init(mode, keyGenAES("saltyN74G@337q8", 239404), ivParameterSpec16(2));
+        aes3.init(mode, keyGenAES("saltyN99!14Ra12", 197781), ivParameterSpec16(3));
         return Arrays.asList(aes1, aes2, aes3);
     }
     

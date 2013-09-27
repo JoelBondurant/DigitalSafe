@@ -136,7 +136,7 @@ public class DigitalSafe {
         return SecureDatabase.getNoteBook();
     }
     
-    public void commitNoteBook(NoteBook noteBook) throws PasswordExpiredException {
+    public static void commitNoteBook(NoteBook noteBook) throws PasswordExpiredException {
         SecureDatabase.commitNoteBook(noteBook);
     }
 

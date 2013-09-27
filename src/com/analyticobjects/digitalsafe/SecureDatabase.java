@@ -20,7 +20,6 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
@@ -52,7 +51,7 @@ final class SecureDatabase {
     private static final String AES = "AES/CBC/NoPadding";
     private static final int AES_BLOCK_SIZE = 16; // 16 byte (128 bit) blocks.
     private static final int AES_KEY_LENGTH = 128;
-    private static final String NOTEBOOK = "noteBook";
+    private static final String NOTEBOOK = "NoteBook";
 
     
     private SecureDatabase(){}; // no, just no.

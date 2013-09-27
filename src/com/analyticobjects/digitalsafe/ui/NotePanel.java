@@ -82,7 +82,7 @@ public class NotePanel extends javax.swing.JPanel {
                                     .addGroup(layout.createSequentialGroup()
                                         .addGap(262, 262, 262)
                                         .addComponent(filler1, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(0, 444, Short.MAX_VALUE))
+                                        .addGap(0, 0, Short.MAX_VALUE))
                                     .addGroup(layout.createSequentialGroup()
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -121,7 +121,7 @@ public class NotePanel extends javax.swing.JPanel {
                 .addComponent(createdLabel)
                 .addGap(12, 12, 12)
                 .addComponent(modifiedLabel)
-                .addContainerGap(291, Short.MAX_VALUE))
+                .addContainerGap(165, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -147,6 +147,7 @@ public class NotePanel extends javax.swing.JPanel {
         Note aNote;
         String title = this.titleField.getText();
         String message = this.messageField.getText();
+        String tagsRaw = this.tagsField.getText();
         if (backingNote == null) {
             aNote = new Note(title, message);
         } else {
@@ -154,7 +155,6 @@ public class NotePanel extends javax.swing.JPanel {
             aNote.setTitle(title);
             aNote.setMessage(message);
         }
-        String tagsRaw = this.tagsField.getText();
         aNote.tagWithTagString(tagsRaw);
         return aNote;
     }

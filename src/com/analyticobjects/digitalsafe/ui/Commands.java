@@ -3,6 +3,7 @@ package com.analyticobjects.digitalsafe.ui;
 import com.analyticobjects.digitalsafe.DigitalSafe;
 import com.analyticobjects.digitalsafe.containers.Note;
 import com.analyticobjects.digitalsafe.containers.NoteBook;
+import com.analyticobjects.digitalsafe.containers.PasswordNote;
 import com.analyticobjects.digitalsafe.exceptions.PasswordExpiredException;
 import com.analyticobjects.digitalsafe.ui.MainFrame.Context;
 
@@ -42,6 +43,10 @@ public class Commands {
                 noteCommand(command);
                 break;
             }
+            case Passwords: {
+                passwordCommand(command);
+                break;
+            }
             default:
         }
     }
@@ -54,12 +59,12 @@ public class Commands {
             Note noteToSave = MainFrame.getInstance().getNoteFromNotePanel();
             NoteBook noteBook = DigitalSafe.getNoteBook();
             noteBook.putNote(noteToSave);
-            DigitalSafe.getInstance().commitNoteBook(noteBook);
+            DigitalSafe.commitNoteBook(noteBook);
             MainFrame.getInstance().setNotesPanel(null);
         } else if (command.startsWith("get ") || command.startsWith("load ") || command.startsWith("open ")) {
             String title = command.substring(4).trim();
             NoteBook noteBook = DigitalSafe.getNoteBook();
-            Note aNote = noteBook.getByTitle(title);
+            Note aNote = noteBook.getNoteByTitle(title);
             if (aNote == null) {
                 MainFrame.getInstance().setNotesPanel(null);
                 return;
@@ -70,4 +75,27 @@ public class Commands {
         }
     }
     
+    private static void passwordCommand(String command) throws PasswordExpiredException {
+        if (command.equals("new") || command.equals("add")) {
+            PasswordNotePanel passwordNotePanel = new PasswordNotePanel();
+            MainFrame.getInstance().setPasswordNotesPanel(passwordNotePanel);
+        } else if (command.equals("save")) {
+            PasswordNote noteToSave = MainFrame.getInstance().getPasswordNoteFromPasswordNotePanel();
+            NoteBook noteBook = DigitalSafe.getNoteBook();
+            noteBook.putPasswordNote(noteToSave);
+            DigitalSafe.commitNoteBook(noteBook);
+            MainFrame.getInstance().setPasswordNotesPanel(null);
+        } else if (command.startsWith("get ") || command.startsWith("load ") || command.startsWith("open ")) {
+            String title = command.substring(4).trim();
+            NoteBook noteBook = DigitalSafe.getNoteBook();
+            PasswordNote aNote = noteBook.getPasswordNoteByTitle(title);
+            if (aNote == null) {
+                MainFrame.getInstance().setNotesPanel(null);
+                return;
+            }
+            PasswordNotePanel passwordNotePanel = new PasswordNotePanel();
+            passwordNotePanel.fromPasswordNote(aNote);
+            MainFrame.getInstance().setPasswordNotesPanel(passwordNotePanel);
+        }
+    }
 }

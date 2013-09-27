@@ -21,6 +21,10 @@ public class PasswordNote extends Note {
         this.userName = "";
         this.password = password;
         this.url = "";
+        this.updateExpiration();
+    }
+    
+    private void updateExpiration() {
         this.expirationTime = TimeUtility.addDays(new Date(), DAYS_TO_EXPIRATION);
     }
     
@@ -38,6 +42,7 @@ public class PasswordNote extends Note {
     }
     
     public void setPassword(String password) {
+        updateExpiration();
         this.updateTime();
         this.password = password;
     }
@@ -55,8 +60,4 @@ public class PasswordNote extends Note {
         return this.expirationTime;
     }
     
-    public void setExpirationTime(Date expirationTime) {
-        this.updateTime();
-        this.expirationTime = (Date) expirationTime.clone();
-    }
 }

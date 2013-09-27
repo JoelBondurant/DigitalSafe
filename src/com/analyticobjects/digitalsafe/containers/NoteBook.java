@@ -78,10 +78,19 @@ public class NoteBook implements Serializable {
         this.passwordNotes.add(aPasswordNote);
     }
 
-    public Note getByTitle(String title) {
-        for (Note note : notes) {
+    public Note getNoteByTitle(String title) {
+        for (Note note : this.notes) {
             if (note.getTitle().toLowerCase().equals(title.toLowerCase())) {
                 return note;
+            }
+        }
+        return null;
+    }
+    
+    public PasswordNote getPasswordNoteByTitle(String title) {
+        for (PasswordNote passwordNote : this.passwordNotes) {
+            if (passwordNote.getTitle().toLowerCase().equals(title.toLowerCase())) {
+                return passwordNote;
             }
         }
         return null;

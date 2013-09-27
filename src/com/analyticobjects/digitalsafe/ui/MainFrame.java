@@ -2,6 +2,7 @@ package com.analyticobjects.digitalsafe.ui;
 
 import com.analyticobjects.digitalsafe.DigitalSafe;
 import com.analyticobjects.digitalsafe.containers.Note;
+import com.analyticobjects.digitalsafe.containers.PasswordNote;
 import com.analyticobjects.digitalsafe.exceptions.InvalidPasswordException;
 import com.analyticobjects.digitalsafe.exceptions.PasswordExpiredException;
 import java.awt.Component;
@@ -54,8 +55,10 @@ public class MainFrame extends javax.swing.JFrame {
         passphraseLabel = new javax.swing.JLabel();
         passphraseField = new javax.swing.JPasswordField();
         commandPanel = new javax.swing.JPanel();
-        searchCommandLabel = new javax.swing.JLabel();
         commandField = new javax.swing.JTextField();
+        commandLabel = new javax.swing.JLabel();
+        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
+        filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -69,55 +72,31 @@ public class MainFrame extends javax.swing.JFrame {
         );
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("DigitalSafe");
+        setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        setMaximumSize(new java.awt.Dimension(2000, 1000));
+        setMinimumSize(new java.awt.Dimension(750, 600));
         setName("mainFrame"); // NOI18N
-        setResizable(false);
+        setPreferredSize(new java.awt.Dimension(750, 600));
 
         titleLabel.setFont(new java.awt.Font("Dialog", 0, 24)); // NOI18N
         titleLabel.setText("DigitalSafe");
 
-        notesPanel.setLayout(new java.awt.CardLayout());
+        notesPanel.setLayout(new javax.swing.BoxLayout(notesPanel, javax.swing.BoxLayout.LINE_AXIS));
         tabbedPane1.addTab("Notes", notesPanel);
         notesPanel.getAccessibleContext().setAccessibleName("Notes");
         notesPanel.getAccessibleContext().setAccessibleDescription("");
 
-        javax.swing.GroupLayout passwordsPanelLayout = new javax.swing.GroupLayout(passwordsPanel);
-        passwordsPanel.setLayout(passwordsPanelLayout);
-        passwordsPanelLayout.setHorizontalGroup(
-            passwordsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 742, Short.MAX_VALUE)
-        );
-        passwordsPanelLayout.setVerticalGroup(
-            passwordsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 471, Short.MAX_VALUE)
-        );
-
+        passwordsPanel.setLayout(new javax.swing.BoxLayout(passwordsPanel, javax.swing.BoxLayout.LINE_AXIS));
         tabbedPane1.addTab("Passwords", passwordsPanel);
-
-        javax.swing.GroupLayout picturesPanelLayout = new javax.swing.GroupLayout(picturesPanel);
-        picturesPanel.setLayout(picturesPanelLayout);
-        picturesPanelLayout.setHorizontalGroup(
-            picturesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 742, Short.MAX_VALUE)
-        );
-        picturesPanelLayout.setVerticalGroup(
-            picturesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 471, Short.MAX_VALUE)
-        );
+        passwordsPanel.getAccessibleContext().setAccessibleName("Passwords");
 
         tabbedPane1.addTab("Pictures", picturesPanel);
+        picturesPanel.getAccessibleContext().setAccessibleName("Pictures");
 
-        javax.swing.GroupLayout filesPanelLayout = new javax.swing.GroupLayout(filesPanel);
-        filesPanel.setLayout(filesPanelLayout);
-        filesPanelLayout.setHorizontalGroup(
-            filesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 742, Short.MAX_VALUE)
-        );
-        filesPanelLayout.setVerticalGroup(
-            filesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 471, Short.MAX_VALUE)
-        );
-
+        filesPanel.setLayout(new javax.swing.BoxLayout(filesPanel, javax.swing.BoxLayout.LINE_AXIS));
         tabbedPane1.addTab("Files", filesPanel);
+        filesPanel.getAccessibleContext().setAccessibleName("Files");
 
         passphraseLabel.setText("Passphrase: ");
 
@@ -137,7 +116,7 @@ public class MainFrame extends javax.swing.JFrame {
                 .addComponent(passphraseLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(passphraseField, javax.swing.GroupLayout.PREFERRED_SIZE, 292, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(27, Short.MAX_VALUE))
+                .addContainerGap(42, Short.MAX_VALUE))
         );
         passphrasePanelLayout.setVerticalGroup(
             passphrasePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -148,31 +127,32 @@ public class MainFrame extends javax.swing.JFrame {
                 .addGap(0, 13, Short.MAX_VALUE))
         );
 
-        searchCommandLabel.setText("Command Line:");
-
         commandField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 commandFieldActionPerformed(evt);
             }
         });
 
+        commandLabel.setText("Command Line:");
+
         javax.swing.GroupLayout commandPanelLayout = new javax.swing.GroupLayout(commandPanel);
         commandPanel.setLayout(commandPanelLayout);
         commandPanelLayout.setHorizontalGroup(
             commandPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(commandPanelLayout.createSequentialGroup()
-                .addComponent(searchCommandLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(commandField))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, commandPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(commandLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(commandField, javax.swing.GroupLayout.PREFERRED_SIZE, 615, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(5, 5, 5))
         );
         commandPanelLayout.setVerticalGroup(
-            commandPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+            commandPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(commandPanelLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(commandPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(searchCommandLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(commandField))
-                .addGap(7, 7, 7))
+                    .addComponent(commandLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(commandField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(0, 9, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -182,28 +162,43 @@ public class MainFrame extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(tabbedPane1)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(tabbedPane1)
+                            .addComponent(commandPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addComponent(filler1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addContainerGap())
+                            .addComponent(filler2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(titleLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(passphrasePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(commandPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+                        .addGap(0, 0, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(titleLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
-                        .addComponent(passphrasePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(commandPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tabbedPane1)
-                .addContainerGap())
+                        .addComponent(passphrasePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(titleLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(0, 0, 0)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(124, 124, 124)
+                        .addComponent(filler1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, 0)
+                        .addComponent(filler2, javax.swing.GroupLayout.PREFERRED_SIZE, 97, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(336, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(commandPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(tabbedPane1)
+                        .addContainerGap())))
         );
 
         tabbedPane1.getAccessibleContext().setAccessibleName("Notes");
@@ -216,12 +211,16 @@ public class MainFrame extends javax.swing.JFrame {
         this.passphrasePanel.setVisible(true);
         this.tabbedPane1.setVisible(false);
         this.commandPanel.setVisible(false);
+        this.revalidate();
+        this.repaint();
     }
     
     public void unlock() {
         this.passphrasePanel.setVisible(false);
         this.tabbedPane1.setVisible(true);
         this.commandPanel.setVisible(true);
+        this.revalidate();
+        this.repaint();
     }
     
     private void passphraseFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_passphraseFieldActionPerformed
@@ -309,12 +308,34 @@ public class MainFrame extends javax.swing.JFrame {
         return null;
     }
     
+    synchronized void setPasswordNotesPanel(PasswordNotePanel passwordNotePanel) {
+        this.passwordsPanel.removeAll();
+        if (passwordNotePanel != null) {
+            passwordNotePanel.setVisible(true);
+            this.passwordsPanel.add(passwordNotePanel);
+        }
+        this.passwordsPanel.revalidate();
+        this.passwordsPanel.repaint();
+    }
+    
+    PasswordNote getPasswordNoteFromPasswordNotePanel() {
+        Component component = this.passwordsPanel.getComponent(0);
+        if (component instanceof PasswordNotePanel) {
+            PasswordNotePanel passwordNotePanel = (PasswordNotePanel) component;
+            return passwordNotePanel.toPasswordNote();
+        }
+        return null;
+    }
+    
     public enum Context {Notes, Passwords, Pictures, Files}
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField commandField;
+    private javax.swing.JLabel commandLabel;
     private javax.swing.JPanel commandPanel;
     private javax.swing.JPanel filesPanel;
+    private javax.swing.Box.Filler filler1;
+    private javax.swing.Box.Filler filler2;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel notesPanel;
     private javax.swing.JPasswordField passphraseField;
@@ -322,7 +343,6 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JPanel passphrasePanel;
     private javax.swing.JPanel passwordsPanel;
     private javax.swing.JPanel picturesPanel;
-    private javax.swing.JLabel searchCommandLabel;
     private javax.swing.JTabbedPane tabbedPane1;
     private javax.swing.JLabel titleLabel;
     // End of variables declaration//GEN-END:variables

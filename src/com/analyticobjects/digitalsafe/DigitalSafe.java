@@ -1,10 +1,9 @@
 package com.analyticobjects.digitalsafe;
 
-
-
 import com.analyticobjects.digitalsafe.exceptions.InvalidPasswordException;
 import com.analyticobjects.digitalsafe.exceptions.PasswordExpiredException;
 import com.analyticobjects.digitalsafe.containers.NoteBook;
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Enumeration;
@@ -142,6 +141,10 @@ public class DigitalSafe {
     
     public static void commitNoteBook(NoteBook noteBook) throws PasswordExpiredException {
         SecureDatabase.commitNoteBook(noteBook);
+    }
+    
+    public static byte[] loadFile(String fileHash) throws PasswordExpiredException, IOException {
+        return SecureDatabase.loadFile(fileHash);
     }
 
     

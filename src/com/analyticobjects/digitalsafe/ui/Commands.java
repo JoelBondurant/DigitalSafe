@@ -8,6 +8,9 @@ import com.analyticobjects.digitalsafe.containers.PasswordNote;
 import com.analyticobjects.digitalsafe.exceptions.PasswordExpiredException;
 import com.analyticobjects.digitalsafe.ui.MainFrame.Context;
 import java.io.File;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 
 /**
@@ -119,7 +122,16 @@ public class Commands {
                 DigitalSafe.commitNoteBook(noteBook);
             }
         } else if (command.startsWith("get ") || command.startsWith("load ") || command.startsWith("open ")) {
-            System.out.println("nadda");
+            String fileName = command.substring(4).trim();
+            NoteBook noteBook = DigitalSafe.getNoteBook();
+            FileNote aFileNote = noteBook.getFileNoteByFileName(fileName);
+            try {
+                if (aFileNote != null) {
+                    aFileNote.export();
+                }
+            } catch (IOException ex) {
+                Logger.getLogger(Commands.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
+            }
         }
     }
 }

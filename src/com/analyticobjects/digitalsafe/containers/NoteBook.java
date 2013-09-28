@@ -109,7 +109,7 @@ public class NoteBook implements Serializable {
     
     public FileNote getFileNoteByFileName(String fileName) {
         for (FileNote fileNote : this.fileNotes) {
-            if (fileNote.getFileName().equals(fileName)) {
+            if (fileNote.getFileName().toLowerCase().equals(fileName)) {
                 return fileNote;
             }
         }

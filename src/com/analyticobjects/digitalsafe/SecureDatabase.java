@@ -23,6 +23,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
@@ -48,7 +50,7 @@ final class SecureDatabase {
     
     private static final String DB_NAME = "digitalSafe.safe";
     private static final String KEYGEN = "PBKDF2WithHmacSHA1";
-    // AES requires PKCS7Padding or better, not PKCS5Padding, so better it is.
+    // I do my own padding, becasue javax.crypto has padding related errors.
     private static final String AES = "AES/CBC/NoPadding";
     private static final int AES_BLOCK_SIZE = 16; // 16 byte (128 bit) blocks.
     private static final int AES_KEY_LENGTH = 128;
@@ -57,6 +59,10 @@ final class SecureDatabase {
     
     private SecureDatabase(){}; // no, just no.
     
+    /**
+     * Ensure a file exists.
+     * @param name A file name to ensure is present.
+     */
     private static void ensureFile(String name) {
         Path dbPath = filePath(name);
         File dbFile = dbPath.toFile();
@@ -69,14 +75,23 @@ final class SecureDatabase {
         }
     }
     
+    /**
+     * Ensure database files are present.
+     */
     static void ensureDB() {
         ensureFile(DB_NAME);
     }
     
+    /**
+     * Reset the DigitalSafe database.
+     */
     static void reset() {
         resetDB();
     }
     
+    /**
+     * Private reset the DigitalSafe database.
+     */
     private static void resetDB() {
         Path dbPath = filePath(DB_NAME);
         File dbFile = dbPath.toFile();
@@ -86,19 +101,46 @@ final class SecureDatabase {
         ensureDB();
     }
     
+    /**
+     * A File object representation of the DigitalSafe database.
+     * @return A File object representation of the DigitalSafe database.
+     */
     private static File dbFile() {
         ensureDB();
         return filePath(DB_NAME).toFile();
     }
-       
+    
+    /**
+     * Gets a ZipOutputStream object representing the outer DigitalSafe database wrapper.
+     * @return A zip file output stream for the DigitalSafe database.
+     * @throws FileNotFoundException 
+     */
     private static ZipOutputStream outZip() throws FileNotFoundException {
         return new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(dbFile())));
     }
     
+    /**
+     * Gets a ZipFile object representing the outer DigitalSafe database wrapper.
+     * @return A zip file archive object for the DigitalSafe database.
+     * @throws IOException 
+     */
     private static ZipFile zipFile() throws IOException {
         return new ZipFile(dbFile());
     }
     
+    /**
+     * Get an executor with a thread for each processor core.
+     * @return An executor with a thread for each processor core.
+     */
+    static ExecutorService allProcessorCores() {
+        return Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    }
+    
+    /**
+     * Get the noteBook from encrypted persistent storage.
+     * @return A volatile memory noteBook.
+     * @throws PasswordExpiredException 
+     */
     static NoteBook getNoteBook() throws PasswordExpiredException {
         NoteBook notebook = null;
         ensureDB();
@@ -124,12 +166,18 @@ final class SecureDatabase {
         return notebook;
     }
     
+    /**
+     * Persist the noteBook to non-volatile storage.
+     * @param noteBook The volatile memory noteBook.
+     * @throws PasswordExpiredException 
+     */
     static void commitNoteBook(NoteBook noteBook) throws PasswordExpiredException {
         try (
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();
                 ObjectOutputStream oos = new ObjectOutputStream(bos);
                 ZipOutputStream zipOut =  outZip();
             ) {
+            // should only be one unmodified file per call, but may need multithreading in future.
             for (FileNote modifiedFileNote : noteBook.getModifiedFileNotes()) {
                 zipOut.putNextEntry(new ZipEntry(modifiedFileNote.getFileHash()));
                 Path sourceFilePath = modifiedFileNote.getSourceFilePath();
@@ -152,10 +200,22 @@ final class SecureDatabase {
         }
     }
     
+    /**
+     * This is a very exciting method.
+     * @param fileName Hey look at me, I'm a file's name.
+     * @return Path of supplied file name.
+     */
     private static Path filePath(String fileName) {
         return FileSystems.getDefault().getPath(".", fileName);
     }
     
+    /**
+     * Generates various independent AES compatible encryption keys based on password.
+     * @param saltString Give the algorithms some salty mc entropy biscuits.
+     * @param iterations Expand effective key space with iterative frizzle dizzling.
+     * @return Can't tell you, it's a secret.
+     * @throws PasswordExpiredException 
+     */
     private static SecretKey keyGenAES(String saltString, int iterations) throws PasswordExpiredException {
         SecretKey key = null;
         try {
@@ -175,6 +235,12 @@ final class SecureDatabase {
         return key;
     }
     
+    /**
+     * Generates three independent cipher initialization vectors.
+     * @param level Encryption level (of 3-AES); [1,2,3]
+     * @return An encryption initialization vector.
+     * @throws PasswordExpiredException 
+     */
     private static IvParameterSpec ivParameterSpec16(int level) throws PasswordExpiredException {
         byte[] iv = { 1, 1, 30, 1, 0, 2, 90, 1, 0, 2, 13, 0, 20, 0, 1, 70 };
         byte[] passwordBytes = DigitalSafe.getInstance().getPassword().getBytes();
@@ -188,6 +254,16 @@ final class SecureDatabase {
         return new IvParameterSpec(iv);
     }
     
+    /**
+     * A list of three independent AES ciphers.
+     * @param mode Cipher.DECRYPT_MODE | Cipher.UNENCRYPT_MODE
+     * @return A list of three independent AES ciphers.
+     * @throws NoSuchAlgorithmException
+     * @throws NoSuchPaddingException
+     * @throws InvalidKeyException
+     * @throws InvalidAlgorithmParameterException
+     * @throws PasswordExpiredException 
+     */
     private static List<Cipher> cipherList(int mode) throws NoSuchAlgorithmException, NoSuchPaddingException,
             InvalidKeyException, InvalidAlgorithmParameterException, PasswordExpiredException {
         Cipher aes1 = Cipher.getInstance(AES);
@@ -199,6 +275,12 @@ final class SecureDatabase {
         return Arrays.asList(aes1, aes2, aes3);
     }
     
+    /**
+     * Decrypts DigitalSafe's custom 3-AES encrypted data.
+     * @param encryptedData
+     * @return
+     * @throws PasswordExpiredException 
+     */
     private static byte[] decrypt(byte[] encryptedData) throws PasswordExpiredException {
         byte[] byteHolder1;
         byte[] byteHolder2 = null;
@@ -216,6 +298,14 @@ final class SecureDatabase {
         return byteHolder2;
     }
     
+    /**
+     * DigitalSafe applies three independent layers of AES (3-AES), with keys
+     * derived somewhat arguably independently from a single password. The 
+     * effective key space size is huge.
+     * @param unencryptedData Raw unpadded data to encrypt.
+     * @return Heavily encrypted data.
+     * @throws PasswordExpiredException 
+     */
     private static byte[] encrypt(byte[] unencryptedData) throws PasswordExpiredException {
         byte[] byteHolder1;
         byte[] byteHolder2 = null;
@@ -233,31 +323,40 @@ final class SecureDatabase {
         return byteHolder2;
     }
     
-    private static byte[] unPad4AES(byte[] paddedEncryptedData) throws BadPaddingException {
-        if (paddedEncryptedData.length == 0) {
+    /**
+     * Removes my custom AES compatible padding from unencrypted data.
+     * @param paddedUnencryptedData Unencrypted data which has been padded.
+     * @return Raw unencrypted unpadded data.
+     * @throws BadPaddingException 
+     */
+    private static byte[] unPad4AES(byte[] paddedUnencryptedData) throws BadPaddingException {
+        if (paddedUnencryptedData.length == 0) {
             throw new BadPaddingException();
         }
-        if ((paddedEncryptedData.length % AES_BLOCK_SIZE) != 0) {
+        if ((paddedUnencryptedData.length % AES_BLOCK_SIZE) != 0) {
             throw new BadPaddingException();
         }
-        byte lastByte = paddedEncryptedData[paddedEncryptedData.length - 1];
+        byte lastByte = paddedUnencryptedData[paddedUnencryptedData.length - 1];
         if ((lastByte < 0) || (lastByte >= AES_BLOCK_SIZE)) {
             throw new BadPaddingException();
         }
         for (int i = 1; i <= (lastByte + AES_BLOCK_SIZE); i++) {
-             byte aByte = paddedEncryptedData[paddedEncryptedData.length - i];
+             byte aByte = paddedUnencryptedData[paddedUnencryptedData.length - i];
              if (aByte != lastByte) {
                  throw new BadPaddingException(); 
              }
         }
-        int encryptedSize = paddedEncryptedData.length - lastByte - AES_BLOCK_SIZE;
-        byte[] encryptedData = new byte[encryptedSize];
-        System.arraycopy(paddedEncryptedData, 0, encryptedData, 0, encryptedSize);
-        return encryptedData;
+        int unencryptedSize = paddedUnencryptedData.length - lastByte - AES_BLOCK_SIZE;
+        byte[] unencryptedData = new byte[unencryptedSize];
+        System.arraycopy(paddedUnencryptedData, 0, unencryptedData, 0, unencryptedSize);
+        return unencryptedData;
     }
 
     /**
-     * Pad unencrypted data for AES / Blowfish blocksize.
+     * Pad unencrypted data for 16 byte block ciphers. For some reason javax.crypto
+     * has PKCS5Padding mentioned for use with AES, despite it requiring at least
+     * PKCS7Padding. This mathod is basically PKCS7Padding with an extra count block
+     * to make clear and unambiguous padding.
      * @param unencryptedData Raw unencrypted binary to encrypt, of no particular size.
      * @return Unencrypted binary padded for AES block size. (and Blowfish)
      */
@@ -271,6 +370,10 @@ final class SecureDatabase {
         return paddedUnencryptedData;
     }
     
+    /**
+     * Test if the password is valid by trying to decrypt the database.
+     * @throws InvalidPasswordException If the decryption fails.
+     */
     static void validatePassword() throws InvalidPasswordException {
         try {
             if (Files.size(dbFile().toPath()) < 1L) {
@@ -281,6 +384,33 @@ final class SecureDatabase {
             Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
             throw new InvalidPasswordException();
         }
+    }
+    
+    /**
+     * Load an encrypted file into volatile memory from the database.
+     * @param fileHash The file hash of the stored file note.
+     * @return 
+     */
+    static byte[] loadFile(String fileHash) throws PasswordExpiredException, IOException {
+        byte[] fileBytes = null;
+        ensureDB();
+        try {
+            if (Files.size(dbFile().toPath()) < 1L) {
+                return fileBytes;
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(SecureDatabase.class.getName()).log(Level.FINEST, ex.getLocalizedMessage(), ex);
+            throw ex;
+        }
+        byte[] encryptedFile = null;
+        try (
+                ZipFile zipFile = zipFile();
+                InputStream fileInStream = zipFile.getInputStream(zipFile.getEntry(fileHash));
+            ) {
+            encryptedFile = ByteUtility.readFully(fileInStream);
+        }
+        fileBytes = decrypt(encryptedFile);
+        return fileBytes;
     }
  
 }

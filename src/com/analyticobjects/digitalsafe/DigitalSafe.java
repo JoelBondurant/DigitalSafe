@@ -92,12 +92,16 @@ public class DigitalSafe {
             MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
             MessageDigest md5 = MessageDigest.getInstance("MD5");
             byte[] hashword = sha256.digest(sb.toString().getBytes());
+            byte[] byteHolder;
+            StringBuilder sb2 = new StringBuilder();
             for (int i = 0; i <= 100000; i++) {
-                hashword = sha256.digest(hashword);
-                hashword = sha1.digest(hashword);
-                hashword = md5.digest(hashword);
-                hashword = sha1.digest(hashword);
-                hashword = sha256.digest(hashword);
+                byteHolder = sha256.digest(hashword);
+                hashword = sha1.digest(byteHolder);
+                byteHolder = sb2.append(ByteUtility.toHexString(md5.digest(hashword))).append(sb).toString().getBytes();
+                hashword = sha1.digest(byteHolder);
+                byteHolder = sha256.digest(hashword);
+                hashword = byteHolder;
+                sb2.setLength(0);
             }
             this.password = ByteUtility.toHexString(hashword);
         } catch (NoSuchAlgorithmException ex) {

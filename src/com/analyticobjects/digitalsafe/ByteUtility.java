@@ -1,10 +1,13 @@
 package com.analyticobjects.digitalsafe;
 
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.Path;
 
 /**
  * A utility class for manipulation of byte arrays.
@@ -38,31 +41,39 @@ public class ByteUtility {
 		}
 		return sb.toString();
 	}
-
-	/**
-	 * Parse a string delimited list of integers into an integer list. 
-	 * @param intStrList A list of integers delimited by ...
-	 * @param delimiter ... delimited by this.
-	 * @return A list of the integers.
-	 */
-	public static List<Integer> intStrList2intList(String intStrList, String delimiter) {
-                String[] intStrArr = intStrList.split(delimiter);
-		List<Integer> intList = new ArrayList<>(intStrArr.length);
-		for(String intStr: intStrArr) {
-			intList.add(Integer.parseInt(intStr));
-		}
-		return intList;
-	}
-
         
         /**
-         * Read all bytes from an input stream into a byte array.
+         * Concatenate or join two byte arrays.
+         * @param a The leader byte array.
+         * @param b The follower byte array.
+         * @return [a, b] / a.join(b) / (a[0], ... a[a.length - 1], b[0], ... b[b.length - 1])
+         */
+        public static byte[] concatenate(byte[] a, byte[] b) {
+            byte[] c = new byte[a.length + b.length];
+            System.arraycopy(a, 0, c, 0, a.length);
+            System.arraycopy(b, 0, c, a.length, b.length);
+            return c;
+        }
+        
+        /**
+         * Read all bytes from a uri into a byte array with buffering.
+         * @param filePath A file path.
+         * @return The byte array representation of the supplied uri.
+         * @throws FileNotFoundException
+         * @throws IOException 
+         */
+        public static byte[] readFully(Path filePath) throws FileNotFoundException, IOException {
+            return readFully(new FileInputStream(filePath.toFile()));
+        }
+
+        /**
+         * Read all bytes from an input stream into a byte array with buffering.
          * @param inputStream Any input stream of bytes.
          * @return The byte array representation of the input stream.
          * @throws IOException 
          */
         public static byte[] readFully(InputStream inputStream) throws IOException {
-            byte[] buffer = new byte[8192];
+            byte[] buffer = new byte[131072];
             int bytesRead;
             ByteArrayOutputStream output = new ByteArrayOutputStream();
             while ((bytesRead = inputStream.read(buffer)) != -1)
@@ -72,5 +83,15 @@ public class ByteUtility {
             return output.toByteArray();
         }
 
+        /**
+         * Write a byte array to a uri with buffering.
+         * @param filePath A file path.
+         * @param bytes The byte array representation of the uri.
+         * @throws IOException 
+         */
+        public static void writeFully(Path filePath, byte[] bytes) throws IOException {
+            (new BufferedOutputStream(new FileOutputStream(filePath.toFile()))).write(bytes);
+        }
+        
 
 }

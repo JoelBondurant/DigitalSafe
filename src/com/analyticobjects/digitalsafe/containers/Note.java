@@ -144,8 +144,6 @@ public class Note implements Serializable {
 
     @Override
     public int hashCode() {
-        int hash = 5;
-        hash = 59 * hash + this.id;
-        return hash;
+        return (59 * 5 + this.id);
     }
 }

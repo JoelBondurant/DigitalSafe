@@ -1,5 +1,7 @@
 package com.analyticobjects.digitalsafe.containers;
 
+import java.io.File;
+
 /**
  * A note type to store pictures.
  * @author Joel Bondurant
@@ -7,8 +9,8 @@ package com.analyticobjects.digitalsafe.containers;
  */
 public class PictureNote extends FileNote {
 
-    public PictureNote(String title, String message) {
-        super(title, message);
+    public PictureNote(File sourceFile, String message) {
+        super(sourceFile, message);
     }
     
 }

@@ -1,5 +1,6 @@
 package com.analyticobjects.digitalsafe;
 
+import com.analyticobjects.digitalsafe.containers.FileNote;
 import com.analyticobjects.digitalsafe.exceptions.InvalidPasswordException;
 import com.analyticobjects.digitalsafe.exceptions.PasswordExpiredException;
 import com.analyticobjects.digitalsafe.containers.NoteBook;
@@ -129,6 +130,15 @@ final class SecureDatabase {
                 ObjectOutputStream oos = new ObjectOutputStream(bos);
                 ZipOutputStream zipOut =  outZip();
             ) {
+            for (FileNote modifiedFileNote : noteBook.getModifiedFileNotes()) {
+                zipOut.putNextEntry(new ZipEntry(modifiedFileNote.getFileHash()));
+                Path sourceFilePath = modifiedFileNote.getSourceFilePath();
+                byte[] fileBytes = ByteUtility.readFully(sourceFilePath);
+                zipOut.write(encrypt(fileBytes));
+                zipOut.flush();
+                zipOut.closeEntry();
+                modifiedFileNote.detachSource();
+            }
             oos.writeObject(noteBook);
             oos.flush();
             byte[] encryptedNoteBook = encrypt(bos.toByteArray());
@@ -146,7 +156,7 @@ final class SecureDatabase {
         return FileSystems.getDefault().getPath(".", fileName);
     }
     
-    private static synchronized SecretKey keyGenAES(String saltString, int iterations) throws PasswordExpiredException {
+    private static SecretKey keyGenAES(String saltString, int iterations) throws PasswordExpiredException {
         SecretKey key = null;
         try {
             SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(KEYGEN);
@@ -266,13 +276,10 @@ final class SecureDatabase {
             if (Files.size(dbFile().toPath()) < 1L) {
                 return; // allow any password for empty database.
             }
-        } catch (IOException ex) {
-            Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
-        }
-        try {
             getNoteBook();
-        } catch (PasswordExpiredException ex) {
+        } catch (IOException | PasswordExpiredException ex) {
             Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
+            throw new InvalidPasswordException();
         }
     }
  

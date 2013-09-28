@@ -1,11 +1,14 @@
 package com.analyticobjects.digitalsafe.ui;
 
 import com.analyticobjects.digitalsafe.DigitalSafe;
+import com.analyticobjects.digitalsafe.containers.FileNote;
 import com.analyticobjects.digitalsafe.containers.Note;
 import com.analyticobjects.digitalsafe.containers.NoteBook;
 import com.analyticobjects.digitalsafe.containers.PasswordNote;
 import com.analyticobjects.digitalsafe.exceptions.PasswordExpiredException;
 import com.analyticobjects.digitalsafe.ui.MainFrame.Context;
+import java.io.File;
+import javax.swing.JFileChooser;
 
 /**
  * Commands.
@@ -47,7 +50,10 @@ public class Commands {
                 passwordCommand(command);
                 break;
             }
-            default:
+            case Files: {
+                fileCommand(command);
+                break;
+            }
         }
     }
 
@@ -96,6 +102,24 @@ public class Commands {
             PasswordNotePanel passwordNotePanel = new PasswordNotePanel();
             passwordNotePanel.fromPasswordNote(aNote);
             MainFrame.getInstance().setPasswordNotesPanel(passwordNotePanel);
+        }
+    }
+    
+    private static void fileCommand(String command) throws PasswordExpiredException {
+        if (command.equals("new") || command.equals("add")) {
+            JFileChooser jFileChooser = new JFileChooser();
+            jFileChooser.addActionListener(null);
+            MainFrame mainFrame = MainFrame.getInstance();
+            int returnVal = jFileChooser.showOpenDialog(mainFrame);
+            if(returnVal == JFileChooser.APPROVE_OPTION) {
+                File selectedFile = jFileChooser.getSelectedFile();
+                FileNote newFileNote = new FileNote(selectedFile, "");
+                NoteBook noteBook = DigitalSafe.getNoteBook();
+                noteBook.putFileNote(newFileNote);
+                DigitalSafe.commitNoteBook(noteBook);
+            }
+        } else if (command.startsWith("get ") || command.startsWith("load ") || command.startsWith("open ")) {
+            System.out.println("nadda");
         }
     }
 }

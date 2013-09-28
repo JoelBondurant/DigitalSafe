@@ -8,6 +8,7 @@ import com.analyticobjects.digitalsafe.exceptions.PasswordExpiredException;
 import java.awt.Component;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JFileChooser;
 
 /**
  * Some 1980's style ui.
@@ -94,7 +95,6 @@ public class MainFrame extends javax.swing.JFrame {
         tabbedPane1.addTab("Pictures", picturesPanel);
         picturesPanel.getAccessibleContext().setAccessibleName("Pictures");
 
-        filesPanel.setLayout(new javax.swing.BoxLayout(filesPanel, javax.swing.BoxLayout.LINE_AXIS));
         tabbedPane1.addTab("Files", filesPanel);
         filesPanel.getAccessibleContext().setAccessibleName("Files");
 
@@ -287,6 +287,16 @@ public class MainFrame extends javax.swing.JFrame {
                 MainFrame.getInstance().setVisible(true);
             }
         });
+    }
+    
+    synchronized void setFilesPanel(JFileChooser fileChooser) {
+        this.filesPanel.removeAll();
+        if (fileChooser != null) {
+            fileChooser.setVisible(true);
+            this.notesPanel.add(fileChooser);
+        }
+        this.notesPanel.revalidate();
+        this.notesPanel.repaint();
     }
     
     synchronized void setNotesPanel(NotePanel notePanel) {

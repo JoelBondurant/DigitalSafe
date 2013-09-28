@@ -77,6 +77,17 @@ public class NoteBook implements Serializable {
         }
         this.passwordNotes.add(aPasswordNote);
     }
+    
+    public void putFileNote(FileNote aFileNote) {
+        if (aFileNote.needsId()) {
+            int newId = generateId(this.fileNotes);
+            aFileNote.setId(newId);
+        }
+        if (this.fileNotes.contains(aFileNote)) {
+            this.fileNotes.remove(aFileNote);
+        }
+        this.fileNotes.add(aFileNote);
+    }
 
     public Note getNoteByTitle(String title) {
         for (Note note : this.notes) {
@@ -95,5 +106,23 @@ public class NoteBook implements Serializable {
         }
         return null;
     }
+    
+    public FileNote getFileNoteByFileName(String fileName) {
+        for (FileNote fileNote : this.fileNotes) {
+            if (fileNote.getFileName().equals(fileName)) {
+                return fileNote;
+            }
+        }
+        return null;
+    }
 
+    public List<FileNote> getModifiedFileNotes() {
+        List<FileNote> modifiedFileNotes = new LinkedList<>();
+        for (FileNote fileNote : this.fileNotes) {
+            if (fileNote.isSourceAttached()) {
+                modifiedFileNotes.add(fileNote);
+            }
+        }
+        return modifiedFileNotes;
+    }
 }

@@ -125,4 +125,14 @@ public class NoteBook implements Serializable {
         }
         return modifiedFileNotes;
     }
+
+    public List<String[]> listFiles() {
+        List<String[]> listOfFiles = new LinkedList<>();
+        for (FileNote fileNote : this.fileNotes) {
+            String[] fileListing = new String[1];
+            fileListing[0] = fileNote.getListing();
+            listOfFiles.add(fileListing);
+        }
+        return listOfFiles;
+    }
 }

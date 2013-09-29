@@ -56,4 +56,14 @@ public class FileNote extends Note {
         byte[] bytes = DigitalSafe.loadFile(this.fileHash);
         ByteUtility.writeFully((new File(this.fileName)).toPath(), bytes);
     }
+
+    public String getListing() {
+        String SPACER = ", ";
+        StringBuilder sb = new StringBuilder();
+        sb.append(this.fileName).append(SPACER);
+        sb.append(this.fileHash).append(SPACER);
+        sb.append(Long.toString(this.sizeInBytes));
+        sb.append(" bytes.");
+        return sb.toString();
+    }
 }

@@ -9,6 +9,7 @@ import com.analyticobjects.digitalsafe.exceptions.PasswordExpiredException;
 import com.analyticobjects.digitalsafe.ui.MainFrame.Context;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
@@ -121,7 +122,7 @@ public class Commands {
                 noteBook.putFileNote(newFileNote);
                 DigitalSafe.commitNoteBook(noteBook);
             }
-        } else if (command.startsWith("get ") || command.startsWith("load ") || command.startsWith("open ")) {
+        } else if (command.startsWith("get ") || command.startsWith("export ")) {
             String fileName = command.substring(4).trim();
             NoteBook noteBook = DigitalSafe.getNoteBook();
             FileNote aFileNote = noteBook.getFileNoteByFileName(fileName);
@@ -132,6 +133,12 @@ public class Commands {
             } catch (IOException ex) {
                 Logger.getLogger(Commands.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
             }
+        } else if (command.equals("list") || command.equals("all") || command.equals("show")) {
+            NoteBook noteBook = DigitalSafe.getNoteBook();
+            List<String[]> fileListing = noteBook.listFiles();
+            ListPanel listingPanel = new ListPanel();
+            listingPanel.setListing(fileListing);
+            MainFrame.getInstance().setFilesPanel(listingPanel);
         }
     }
 }

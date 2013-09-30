@@ -4,7 +4,7 @@ import com.analyticobjects.digitalsafe.exceptions.InvalidPasswordException;
 import com.analyticobjects.digitalsafe.exceptions.PasswordExpiredException;
 import com.analyticobjects.digitalsafe.containers.NoteBook;
 import java.io.IOException;
-import java.security.MessageDigest;
+import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Enumeration;
 import java.util.concurrent.Executors;
@@ -26,18 +26,19 @@ public class DigitalSafe {
     private static DigitalSafe singletonInstance;
     static final String BLANK = "";
     private final ScheduledExecutorService executor;
-    private String password;
+    private byte[] password;
     private int secondsToCachePassword;
     
     static final String RESET = "RESET";
     private final String PASSWORD_SALT = "abcDEF1234!@#$";
+    private final int PASSWORD_ITERATIONS = 1001001;
     private static final Level LOGGING_LEVEL = Level.ALL;
     
     
     private DigitalSafe() {
         this.setLoggingLevelGlobally(LOGGING_LEVEL);
         this.executor = Executors.newSingleThreadScheduledExecutor();
-        this.password = BLANK;
+        this.password = null;
         this.secondsToCachePassword = 60*5;
         SecureDatabase.ensureDB();
     }
@@ -57,15 +58,15 @@ public class DigitalSafe {
         }
     }
     
-    String getPassword() throws PasswordExpiredException {
-        if (password.isEmpty()) {
+    byte[] getPassword() throws PasswordExpiredException {
+        if (this.password == null) {
             throw new PasswordExpiredException();
         }
         return this.password;
     }
     
     public boolean isUnlocked() {
-        return !this.password.isEmpty();
+        return (this.password != null);
     }
     
     public void lock() {
@@ -81,29 +82,9 @@ public class DigitalSafe {
     public void setPassword(String password) throws InvalidPasswordException {
         validatePassword(password);
         this.executor.schedule(new BlankPasswordTask(), secondsToCachePassword, TimeUnit.SECONDS);
-        StringBuilder sb = new StringBuilder(password);
-        sb.append(PASSWORD_SALT); // hash the shizzle dizzle out of the password...
-        sb.append(sb.toString().toLowerCase());
-        sb.append(sb.toString().toUpperCase());
-        sb.append(sb.reverse().toString());
         try {
-            MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
-            MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
-            MessageDigest md5 = MessageDigest.getInstance("MD5");
-            byte[] hashword = sha256.digest(sb.toString().getBytes());
-            byte[] byteHolder;
-            StringBuilder sb2 = new StringBuilder();
-            for (int i = 0; i <= 100000; i++) {
-                byteHolder = sha256.digest(hashword);
-                hashword = sha1.digest(byteHolder);
-                byteHolder = sb2.append(ByteUtility.toHexString(md5.digest(hashword))).append(sb).toString().getBytes();
-                hashword = sha1.digest(byteHolder);
-                byteHolder = sha256.digest(hashword);
-                hashword = byteHolder;
-                sb2.setLength(0);
-            }
-            this.password = ByteUtility.toHexString(hashword);
-        } catch (NoSuchAlgorithmException ex) {
+            this.password = Crypto.oneWayHash(password, PASSWORD_SALT, PASSWORD_ITERATIONS);
+        } catch (NoSuchAlgorithmException | UnsupportedEncodingException ex) {
             blankPassword();
             Logger.getLogger(NoteBook.class.getName()).log(Level.SEVERE, ex.getMessage(), ex);
         }
@@ -120,7 +101,7 @@ public class DigitalSafe {
     }
     
     void blankPassword() {
-        this.password = BLANK;
+        this.password = null;
         System.gc();
     }
     

@@ -17,12 +17,6 @@ import java.io.ObjectOutputStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -30,15 +24,6 @@ import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.SecretKeySpec;
 
 /**
  * A class to hide all the note database decrypted data.
@@ -49,11 +34,6 @@ import javax.crypto.spec.SecretKeySpec;
 final class SecureDatabase {
     
     private static final String DB_NAME = "digitalSafe.safe";
-    private static final String KEYGEN = "PBKDF2WithHmacSHA1";
-    // I do my own padding, becasue javax.crypto has padding related errors.
-    private static final String AES = "AES/CBC/NoPadding";
-    private static final int AES_BLOCK_SIZE = 16; // 16 byte (128 bit) blocks.
-    private static final int AES_KEY_LENGTH = 128;
     private static final String NOTEBOOK = "NoteBook";
 
     
@@ -156,7 +136,7 @@ final class SecureDatabase {
                 InputStream noteBookInStream = zipFile.getInputStream(zipFile.getEntry(NOTEBOOK));
             ) {
             byte[] encryptedNoteBook = ByteUtility.readFully(noteBookInStream);
-            byte[] decryptedNoteBook = decrypt(encryptedNoteBook);
+            byte[] decryptedNoteBook = Crypto.decrypt(DigitalSafe.getInstance().getPassword(), encryptedNoteBook);
             try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(decryptedNoteBook))) {
                 notebook = (NoteBook) ois.readObject();
             }
@@ -182,14 +162,14 @@ final class SecureDatabase {
                 zipOut.putNextEntry(new ZipEntry(modifiedFileNote.getFileHash()));
                 Path sourceFilePath = modifiedFileNote.getSourceFilePath();
                 byte[] fileBytes = ByteUtility.readFully(sourceFilePath);
-                zipOut.write(encrypt(fileBytes));
+                zipOut.write(Crypto.encrypt(DigitalSafe.getInstance().getPassword(), fileBytes));
                 zipOut.flush();
                 zipOut.closeEntry();
                 modifiedFileNote.detachSource();
             }
             oos.writeObject(noteBook);
             oos.flush();
-            byte[] encryptedNoteBook = encrypt(bos.toByteArray());
+            byte[] encryptedNoteBook = Crypto.encrypt(DigitalSafe.getInstance().getPassword(), bos.toByteArray());
             zipOut.putNextEntry(new ZipEntry(NOTEBOOK));
             zipOut.write(encryptedNoteBook);
             zipOut.flush();
@@ -209,166 +189,6 @@ final class SecureDatabase {
         return FileSystems.getDefault().getPath(".", fileName);
     }
     
-    /**
-     * Generates various independent AES compatible encryption keys based on password.
-     * @param saltString Give the algorithms some salty mc entropy biscuits.
-     * @param iterations Expand effective key space with iterative frizzle dizzling.
-     * @return Can't tell you, it's a secret.
-     * @throws PasswordExpiredException 
-     */
-    private static SecretKey keyGenAES(String saltString, int iterations) throws PasswordExpiredException {
-        SecretKey key = null;
-        try {
-            SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(KEYGEN);
-            String password = DigitalSafe.getInstance().getPassword();
-            byte[] passwordBytes = password.getBytes();
-            byte[] salt = saltString.getBytes();
-            salt[1] = passwordBytes[2]; // salting the salt.
-            salt[2] = passwordBytes[1];
-            salt[3] = (byte)(0xff & (passwordBytes[3] ^ passwordBytes[4]));
-            PBEKeySpec pbeKeySpec = new PBEKeySpec(password.toCharArray(), salt, iterations, AES_KEY_LENGTH);
-            key = keyFactory.generateSecret(pbeKeySpec);
-            key = new SecretKeySpec(key.getEncoded(), "AES");
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException ex) {
-            Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
-        }
-        return key;
-    }
-    
-    /**
-     * Generates three independent cipher initialization vectors.
-     * @param level Encryption level (of 3-AES); [1,2,3]
-     * @return An encryption initialization vector.
-     * @throws PasswordExpiredException 
-     */
-    private static IvParameterSpec ivParameterSpec16(int level) throws PasswordExpiredException {
-        byte[] iv = { 1, 1, 30, 1, 0, 2, 90, 1, 0, 2, 13, 0, 20, 0, 1, 70 };
-        byte[] passwordBytes = DigitalSafe.getInstance().getPassword().getBytes();
-        iv[level] = passwordBytes[0]; // swizzleness...
-        iv[level + 1] = passwordBytes[1];
-        iv[level + 3] = passwordBytes[2];
-        iv[level + 5] = (byte)(0xff & (passwordBytes[1] ^ passwordBytes[3]));
-        iv[level + 7] = passwordBytes[4];
-        iv[level + 10] = passwordBytes[5];
-        iv[level + 11] = (byte)(0xff & (passwordBytes[3] ^ passwordBytes[5]));
-        return new IvParameterSpec(iv);
-    }
-    
-    /**
-     * A list of three independent AES ciphers.
-     * @param mode Cipher.DECRYPT_MODE | Cipher.UNENCRYPT_MODE
-     * @return A list of three independent AES ciphers.
-     * @throws NoSuchAlgorithmException
-     * @throws NoSuchPaddingException
-     * @throws InvalidKeyException
-     * @throws InvalidAlgorithmParameterException
-     * @throws PasswordExpiredException 
-     */
-    private static List<Cipher> cipherList(int mode) throws NoSuchAlgorithmException, NoSuchPaddingException,
-            InvalidKeyException, InvalidAlgorithmParameterException, PasswordExpiredException {
-        Cipher aes1 = Cipher.getInstance(AES);
-        Cipher aes2 = Cipher.getInstance(AES);
-        Cipher aes3 = Cipher.getInstance(AES);
-        aes1.init(mode, keyGenAES("saltyN3SS&Whate", 189213), ivParameterSpec16(1));
-        aes2.init(mode, keyGenAES("saltyN74G@337q8", 239404), ivParameterSpec16(2));
-        aes3.init(mode, keyGenAES("saltyN99!14Ra12", 197781), ivParameterSpec16(3));
-        return Arrays.asList(aes1, aes2, aes3);
-    }
-    
-    /**
-     * Decrypts DigitalSafe's custom 3-AES encrypted data.
-     * @param encryptedData
-     * @return
-     * @throws PasswordExpiredException 
-     */
-    private static byte[] decrypt(byte[] encryptedData) throws PasswordExpiredException {
-        byte[] byteHolder1;
-        byte[] byteHolder2 = null;
-        try {
-            List<Cipher> ciphers = cipherList(Cipher.DECRYPT_MODE);
-            byteHolder1 = ciphers.get(2).doFinal(encryptedData);
-            byteHolder2 = ciphers.get(1).doFinal(byteHolder1);
-            byteHolder1 = ciphers.get(0).doFinal(byteHolder2);
-            byteHolder2 = unPad4AES(byteHolder1);
-        } catch (IllegalBlockSizeException | NoSuchPaddingException | BadPaddingException | InvalidKeyException ex) {
-            Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
-        } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException ex) {
-            Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
-        }
-        return byteHolder2;
-    }
-    
-    /**
-     * DigitalSafe applies three independent layers of AES (3-AES), with keys
-     * derived somewhat arguably independently from a single password. The 
-     * effective key space size is huge.
-     * @param unencryptedData Raw unpadded data to encrypt.
-     * @return Heavily encrypted data.
-     * @throws PasswordExpiredException 
-     */
-    private static byte[] encrypt(byte[] unencryptedData) throws PasswordExpiredException {
-        byte[] byteHolder1;
-        byte[] byteHolder2 = null;
-        try {
-            List<Cipher> ciphers = cipherList(Cipher.ENCRYPT_MODE);
-            byteHolder1 = pad4AES(unencryptedData);
-            byteHolder2 = ciphers.get(0).doFinal(byteHolder1);
-            byteHolder1 = ciphers.get(1).doFinal(byteHolder2);
-            byteHolder2 = ciphers.get(2).doFinal(byteHolder1);
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | BadPaddingException ex) {
-            Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
-        } catch (IllegalBlockSizeException | InvalidAlgorithmParameterException ex) {
-            Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
-        }
-        return byteHolder2;
-    }
-    
-    /**
-     * Removes my custom AES compatible padding from unencrypted data.
-     * @param paddedUnencryptedData Unencrypted data which has been padded.
-     * @return Raw unencrypted unpadded data.
-     * @throws BadPaddingException 
-     */
-    private static byte[] unPad4AES(byte[] paddedUnencryptedData) throws BadPaddingException {
-        if (paddedUnencryptedData.length == 0) {
-            throw new BadPaddingException();
-        }
-        if ((paddedUnencryptedData.length % AES_BLOCK_SIZE) != 0) {
-            throw new BadPaddingException();
-        }
-        byte lastByte = paddedUnencryptedData[paddedUnencryptedData.length - 1];
-        if ((lastByte < 0) || (lastByte >= AES_BLOCK_SIZE)) {
-            throw new BadPaddingException();
-        }
-        for (int i = 1; i <= (lastByte + AES_BLOCK_SIZE); i++) {
-             byte aByte = paddedUnencryptedData[paddedUnencryptedData.length - i];
-             if (aByte != lastByte) {
-                 throw new BadPaddingException(); 
-             }
-        }
-        int unencryptedSize = paddedUnencryptedData.length - lastByte - AES_BLOCK_SIZE;
-        byte[] unencryptedData = new byte[unencryptedSize];
-        System.arraycopy(paddedUnencryptedData, 0, unencryptedData, 0, unencryptedSize);
-        return unencryptedData;
-    }
-
-    /**
-     * Pad unencrypted data for 16 byte block ciphers. For some reason javax.crypto
-     * has PKCS5Padding mentioned for use with AES, despite it requiring at least
-     * PKCS7Padding. This mathod is basically PKCS7Padding with an extra count block
-     * to make clear and unambiguous padding.
-     * @param unencryptedData Raw unencrypted binary to encrypt, of no particular size.
-     * @return Unencrypted binary padded for AES block size. (and Blowfish)
-     */
-    private static byte[] pad4AES(byte[] unencryptedData) {
-        int bytesToPad = AES_BLOCK_SIZE - (unencryptedData.length % AES_BLOCK_SIZE);
-        byte bytesToPadValue = Integer.valueOf(bytesToPad).byteValue();
-        int totalBytes = unencryptedData.length + bytesToPad + AES_BLOCK_SIZE;
-        byte[] paddedUnencryptedData = new byte[totalBytes];
-        System.arraycopy(unencryptedData, 0, paddedUnencryptedData, 0, unencryptedData.length);
-        Arrays.fill(paddedUnencryptedData, unencryptedData.length, totalBytes, bytesToPadValue);
-        return paddedUnencryptedData;
-    }
     
     /**
      * Test if the password is valid by trying to decrypt the database.
@@ -409,7 +229,7 @@ final class SecureDatabase {
             ) {
             encryptedFile = ByteUtility.readFully(fileInStream);
         }
-        fileBytes = decrypt(encryptedFile);
+        fileBytes = Crypto.decrypt(DigitalSafe.getInstance().getPassword(), encryptedFile);
         return fileBytes;
     }
  

@@ -135,4 +135,38 @@ public class NoteBook implements Serializable {
         }
         return listOfFiles;
     }
+    
+    /**
+     * Transform notebook to plain text XML for data portability.
+     * @return XML string representing the notebook.
+     */
+    public String toXML() {
+        // Not using JAXB because it's so ugly and non-potable.
+        // Not using javax.xml libs because I'm doing this ultralight.
+        StringBuilder xml = new StringBuilder();
+        xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
+        xml.append("<NoteBook>\n");
+        xml.append("<Notes>\n");
+        for (Note note : this.notes) {
+            xml.append(note.toXML());
+        }
+        xml.append("</Notes>\n");
+        xml.append("<PasswordNotes>\n");
+        for (PasswordNote passwordNote : this.passwordNotes) {
+            xml.append(passwordNote.toXML());
+        }
+        xml.append("</PasswordNotes>\n");
+        xml.append("<FileNotes>\n");
+        for (FileNote fileNote : this.fileNotes) {
+            xml.append(fileNote.toXML());
+        }
+        xml.append("</FileNotes>\n");
+        xml.append("<PictureNotes>\n");
+        for (PictureNote pictureNote : this.pictureNotes) {
+            xml.append(pictureNote.toXML());
+        }
+        xml.append("</PictureNotes>\n");
+        xml.append("</NoteBook>\n");
+        return xml.toString();
+    }
 }

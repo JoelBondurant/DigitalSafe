@@ -35,6 +35,8 @@ final class SecureDatabase {
     
     private static final String DB_NAME = "digitalSafe.safe";
     private static final String NOTEBOOK = "NoteBook";
+    private static final String NOTEBOOK_BAK1 = "NoteBookBAK1";
+    private static final String NOTEBOOK_BAK2 = "NoteBookBAK2";
 
     
     private SecureDatabase(){}; // no, just no.
@@ -170,6 +172,14 @@ final class SecureDatabase {
             oos.writeObject(noteBook);
             oos.flush();
             byte[] encryptedNoteBook = Crypto.encrypt(DigitalSafe.getInstance().getPassword(), bos.toByteArray());
+            zipOut.putNextEntry(new ZipEntry(NOTEBOOK_BAK2));
+            zipOut.write(encryptedNoteBook);
+            zipOut.flush();
+            zipOut.closeEntry();
+            zipOut.putNextEntry(new ZipEntry(NOTEBOOK_BAK1));
+            zipOut.write(encryptedNoteBook);
+            zipOut.flush();
+            zipOut.closeEntry();
             zipOut.putNextEntry(new ZipEntry(NOTEBOOK));
             zipOut.write(encryptedNoteBook);
             zipOut.flush();

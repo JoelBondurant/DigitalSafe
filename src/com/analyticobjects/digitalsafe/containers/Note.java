@@ -146,4 +146,14 @@ public class Note implements Serializable {
     public int hashCode() {
         return (59 * 5 + this.id);
     }
+
+    String toXML() {
+        StringBuilder xmlSnip = new StringBuilder();
+        xmlSnip.append("\t<Note>\n");
+        xmlSnip.append("\t\t<Title>").append(this.title).append("</Title>\n");
+        xmlSnip.append("\t\t<Message>").append(this.message).append("</Message>\n");
+        xmlSnip.append("\t\t<Tags>").append(this.getTagString()).append("</Tags>\n");
+        xmlSnip.append("\t</Note>\n");
+        return xmlSnip.toString();
+    }
 }

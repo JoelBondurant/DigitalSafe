@@ -7,7 +7,9 @@ import com.analyticobjects.digitalsafe.containers.NoteBook;
 import com.analyticobjects.digitalsafe.containers.PasswordNote;
 import com.analyticobjects.digitalsafe.exceptions.PasswordExpiredException;
 import com.analyticobjects.digitalsafe.ui.MainFrame.Context;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Level;
@@ -41,6 +43,15 @@ public class Commands {
             }
             case "lock": {
                 MainFrame.getInstance().lock();
+                break;
+            }
+            case "export": {
+                NoteBook noteBook = DigitalSafe.getNoteBook();
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter("noteBook.xml"));) {
+                    writer.write(noteBook.toXML());
+                } catch (IOException ex) {
+                    Logger.getLogger(Commands.class.getName()).log(Level.SEVERE, null, ex);
+                }
                 break;
             }
         }

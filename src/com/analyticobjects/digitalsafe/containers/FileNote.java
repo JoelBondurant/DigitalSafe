@@ -66,4 +66,16 @@ public class FileNote extends Note {
         sb.append(" bytes.");
         return sb.toString();
     }
+    
+    @Override
+    String toXML() {
+        StringBuilder xmlSnip = new StringBuilder();
+        xmlSnip.append("\t<FileNote>\n");
+        xmlSnip.append("\t\t<FileName>").append(this.fileName).append("</FileName>\n");
+        xmlSnip.append("\t\t<FileHash>").append(this.fileHash).append("</FileHash>\n");
+        xmlSnip.append("\t\t<SizeInBytes>").append(Long.toString(this.sizeInBytes)).append("</SizeInBytes>\n");
+        xmlSnip.append("\t\t<Tags>").append(this.getTagString()).append("</Tags>\n");
+        xmlSnip.append("\t</FileNote>\n");
+        return xmlSnip.toString();
+    }
 }

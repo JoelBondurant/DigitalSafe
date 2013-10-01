@@ -60,4 +60,17 @@ public class PasswordNote extends Note {
         return this.expirationTime;
     }
     
+    @Override
+    String toXML() {
+        StringBuilder xmlSnip = new StringBuilder();
+        xmlSnip.append("\t<PasswordNote>\n");
+        xmlSnip.append("\t\t<Title>").append(this.getTitle()).append("</Title>\n");
+        xmlSnip.append("\t\t<UserName>").append(this.userName).append("</UserName>\n");
+        xmlSnip.append("\t\t<Password>").append(this.password).append("</Password>\n");
+        xmlSnip.append("\t\t<URL>").append(this.url).append("</URL>\n");
+        xmlSnip.append("\t\t<Tags>").append(this.getTagString()).append("</Tags>\n");
+        xmlSnip.append("\t</PasswordNote>\n");
+        return xmlSnip.toString();
+    }
+    
 }

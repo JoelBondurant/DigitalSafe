@@ -6,6 +6,7 @@ import com.analyticobjects.digitalsafe.containers.NoteBook;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -101,6 +102,9 @@ public class DigitalSafe {
     }
     
     void blankPassword() {
+        if (this.password != null) {
+            Arrays.fill(this.password, (byte) 0b00000000);
+        }
         this.password = null;
         System.gc();
     }
@@ -128,5 +132,18 @@ public class DigitalSafe {
         return SecureDatabase.loadFile(fileHash);
     }
 
+    /**
+     * When this class is garbage collected on system exit, we clear the password first for good measure.
+     * @throws Throwable 
+     */
+    @Override
+    protected void finalize() throws Throwable {
+        try {
+            super.finalize();
+            this.blankPassword();
+        } catch (Exception ex) {
+            Logger.getLogger(this.getClass().getName()).severe(ex.getMessage());
+        }
+    }
     
 }

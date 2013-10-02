@@ -5,9 +5,11 @@ import com.analyticobjects.digitalsafe.containers.Note;
 import com.analyticobjects.digitalsafe.containers.PasswordNote;
 import com.analyticobjects.digitalsafe.exceptions.InvalidPasswordException;
 import com.analyticobjects.digitalsafe.exceptions.PasswordExpiredException;
+import com.analyticobjects.digitalsafe.res.ResourceLoader;
 import java.awt.Component;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.ImageIcon;
 
 /**
  * Some 1980's style ui.
@@ -25,6 +27,7 @@ public class MainFrame extends javax.swing.JFrame {
     private MainFrame() {
         digiSafe = DigitalSafe.getInstance();
         initComponents();
+        initComponents2();
         lock();
     }
     
@@ -205,6 +208,11 @@ public class MainFrame extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    
+    private void initComponents2() {
+        setIconImage(new ImageIcon(ResourceLoader.class.getResource("safe.png")).getImage());
+    }
+    
     public final void lock() {
         digiSafe.lock();
         this.passphrasePanel.setVisible(true);

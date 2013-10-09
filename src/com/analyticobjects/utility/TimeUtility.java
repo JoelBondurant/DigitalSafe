@@ -1,4 +1,4 @@
-package com.analyticobjects.digitalsafe;
+package com.analyticobjects.utility;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -14,7 +14,8 @@ import java.util.GregorianCalendar;
  */
 public class TimeUtility {
 
-	private TimeUtility() {} // makes sure that no one tries to instantiate this.
+	private TimeUtility() {
+	} // makes sure that no one tries to instantiate this.
 
 	/**
 	 * A regEx for a date-time string.
@@ -65,9 +66,8 @@ public class TimeUtility {
 	/**
 	 * Convert a date to a string with specified format string.
 	 *
-	 * Format string examples:
-	 * STANDARD_DATE_PATTERN = "yyyy-MM-dd'T'HH:mm:ss";
-	 * FILENAME_DATE_PATTERN = "yyyyMMdd'T'HHmmss";
+	 * Format string examples: STANDARD_DATE_PATTERN = "yyyy-MM-dd'T'HH:mm:ss"; FILENAME_DATE_PATTERN =
+	 * "yyyyMMdd'T'HHmmss";
 	 *
 	 * @param aDate A date to format.
 	 * @param dateFormatString A date formatting string.
@@ -110,25 +110,25 @@ public class TimeUtility {
 		if (startDate == null || endDate == null) {
 			return null;
 		}
-		return (endDate.getTime() - startDate.getTime()) / (1000L) ;
+		return (endDate.getTime() - startDate.getTime()) / (1000L);
 	}
 
-        /**
-         * Add time to a date with generic settings.
-         * 
-         * @param aDate A starting date to reference.
-         * @param timeToAdd Amount of time to add to starting reference.
-         * @param timeUnits Units of time for the timeToAdd field.
-         * @return The resultant date.
-         */
+	/**
+	 * Add time to a date with generic settings.
+	 *
+	 * @param aDate A starting date to reference.
+	 * @param timeToAdd Amount of time to add to starting reference.
+	 * @param timeUnits Units of time for the timeToAdd field.
+	 * @return The resultant date.
+	 */
 	public static Date addTime(Date aDate, int timeToAdd, int timeUnits) {
 		Calendar cal = GregorianCalendar.getInstance();
 		cal.setTime(aDate);
 		cal.add(timeUnits, timeToAdd);
 		return cal.getTime();
 	}
-        
-        /**
+
+	/**
 	 * Add days to a date by value.
 	 *
 	 * @param aDate Pass date by value.
@@ -152,12 +152,13 @@ public class TimeUtility {
 
 	/**
 	 * Add seconds to a date by value.
+	 *
 	 * @param aDate Pass date by value.
 	 * @param seconds Number of seconds to add.
 	 * @return A new date object with the seconds added.
 	 */
 	public static Date addSeconds(Date aDate, int seconds) {
-                return addTime(aDate, seconds, Calendar.SECOND);
+		return addTime(aDate, seconds, Calendar.SECOND);
 	}
 
 	/**

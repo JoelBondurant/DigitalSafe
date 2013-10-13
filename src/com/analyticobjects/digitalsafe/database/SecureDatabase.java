@@ -5,16 +5,13 @@ import com.analyticobjects.digitalsafe.exceptions.PassphraseExpiredException;
 import com.analyticobjects.digitalsafe.crypto.Passphrase;
 import com.analyticobjects.digitalsafe.crypto.TripleAES;
 import com.analyticobjects.digitalsafe.exceptions.InvalidPassphraseException;
+import com.analyticobjects.utility.SerializableUtility;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -155,7 +152,6 @@ public final class SecureDatabase {
 	 * @throws PassphraseExpiredException
 	 */
 	public MasterIndex getMasterIndex() throws PassphraseExpiredException {
-		MasterIndex masterIndex = null;
 		ensureFile();
 		if (isEmpty()) {
 			return new MasterIndex(); // only make a new MasterIndex for empty db.
@@ -165,13 +161,11 @@ public final class SecureDatabase {
 			InputStream masterIndexInStream = zipFile.getInputStream(zipFile.getEntry(MASTER_INDEX));) {
 			byte[] encryptedMasterIndex = ByteUtility.readFully(masterIndexInStream);
 			byte[] decryptedMasterIndex = TripleAES.decrypt(this.passphrase, encryptedMasterIndex);
-			try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(decryptedMasterIndex))) {
-				masterIndex = (MasterIndex) ois.readObject();
-			}
+			return SerializableUtility.<MasterIndex>inflate(decryptedMasterIndex);
 		} catch (IOException | ClassNotFoundException ex) {
 			Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
 		}
-		return masterIndex;
+		return null;
 	}
 
 	/**
@@ -181,10 +175,7 @@ public final class SecureDatabase {
 	 * @throws PassphraseExpiredException
 	 */
 	public void commitMasterIndex(MasterIndex masterIndex) throws PassphraseExpiredException {
-		try (
-			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			ObjectOutputStream oos = new ObjectOutputStream(bos);
-			ZipOutputStream zipOut = outZip();) {
+		try (ZipOutputStream zipOut = outZip();) {
 			// should only be one unmodified file per call, but may need multithreading in future.
 			for (FileTable fileTable : masterIndex.getFileTables()) {
 				Logger.getLogger(SecureDatabase.class.getName()).log(Level.FINE, "Committing File Table: {0}", fileTable.getName());
@@ -202,9 +193,7 @@ public final class SecureDatabase {
 					fileTableEntry.detachSource();
 				}
 			}
-			oos.writeObject(masterIndex);
-			oos.flush();
-			byte[] encryptedMasterIndex = TripleAES.encrypt(this.passphrase, bos.toByteArray());
+			byte[] encryptedMasterIndex = TripleAES.encrypt(this.passphrase, SerializableUtility.<MasterIndex>deflate(masterIndex));
 			zipOut.putNextEntry(new ZipEntry(MASTER_INDEX));
 			zipOut.write(encryptedMasterIndex);
 			zipOut.flush();

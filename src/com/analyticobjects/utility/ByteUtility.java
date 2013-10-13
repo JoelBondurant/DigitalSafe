@@ -13,7 +13,7 @@ import java.nio.file.Path;
  * A utility class for manipulation of byte arrays.
  *
  * @author Joel Bondurant
- * @version 2011.0317
+ * @since 2011.0317
  */
 public class ByteUtility {
 

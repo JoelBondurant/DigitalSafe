@@ -15,8 +15,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
@@ -128,15 +126,6 @@ public final class SecureDatabase {
 	private ZipFile zipDbFile() throws IOException {
 		return new ZipFile(dbFile());
 	}
-
-	/**
-	 * Create new executor with a thread for each processor core.
-	 *
-	 * @return A new executor with a thread for each processor core.
-	 */
-	private static ExecutorService allProcessorCores() {
-		return Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-	}
 	
 	/**
 	 * @return True if empty, false ow.
@@ -175,6 +164,7 @@ public final class SecureDatabase {
 	 * @throws PassphraseExpiredException
 	 */
 	public void commitMasterIndex(MasterIndex masterIndex) throws PassphraseExpiredException {
+		
 		try (ZipOutputStream zipOut = outZip();) {
 			// should only be one unmodified file per call, but may need multithreading in future.
 			for (FileTable fileTable : masterIndex.getFileTables()) {
@@ -193,6 +183,7 @@ public final class SecureDatabase {
 					fileTableEntry.detachSource();
 				}
 			}
+			masterIndex.incrementCommitCount();
 			byte[] encryptedMasterIndex = TripleAES.encrypt(this.passphrase, SerializableUtility.<MasterIndex>deflate(masterIndex));
 			zipOut.putNextEntry(new ZipEntry(MASTER_INDEX));
 			zipOut.write(encryptedMasterIndex);

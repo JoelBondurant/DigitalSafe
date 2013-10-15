@@ -23,8 +23,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 /**
  * A class to wrap up an implementation of triple AES. I decided to use a triple-128 bit AES rather than using Oracle's
- * higher strength crap due to not wanting to deal with licensing and export rules. This project is all about having 
- * rule making tyrants foff user data. 
+ * higher strength stuff due to not wanting to deal with licensing and export rules.
  * 
  * TODO: Java 8 will support static interface methods. (Cipher.encrypt/decrypt)
  * TODO: Get rid of this NSA sponsored AES crap and implement Triple-Twofish.

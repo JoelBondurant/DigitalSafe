@@ -87,7 +87,7 @@ public final class Passphrase {
 		validatePassphrase(passphrase);
 		this.executor.schedule(new ClearPassphraseTask(), secondsToCachePassphrase, TimeUnit.SECONDS);
 		try {
-			this.passphraseHash = OneWayHash.hash512(passphrase, STATIC_SALT, PASSWORD_ITERATIONS);
+			this.passphraseHash = HashUtility.hash512(passphrase, STATIC_SALT, PASSWORD_ITERATIONS);
 		} catch (NoSuchAlgorithmException | UnsupportedEncodingException ex) {
 			clear();
 			Logger.getLogger(MasterIndex.class.getName()).log(Level.SEVERE, ex.getMessage(), ex);

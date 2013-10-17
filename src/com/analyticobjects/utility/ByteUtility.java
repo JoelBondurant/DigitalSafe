@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 
 /**
@@ -16,6 +17,8 @@ import java.nio.file.Path;
  * @since 2011.0317
  */
 public class ByteUtility {
+	
+	public final static int SIZE_IN_BITS = 8;
 
 	private ByteUtility() {
 	} // makes sure that no one tries to instantiate this.
@@ -41,7 +44,7 @@ public class ByteUtility {
 		}
 		return sb.toString();
 	}
-	
+
 	/**
 	 * Converts a byte array to hex string with leading 0x.
 	 *
@@ -53,6 +56,37 @@ public class ByteUtility {
 			return null;
 		}
 		return "0x" + toHexString(byteArray);
+	}
+	
+	/**
+	 * Convert a byte array to a binary string.
+	 * @param byteArray A byte array.
+	 * @return 0bXXXXXXXXXXXX
+	 */
+	public static String toBinString0b(byte[] byteArray) {
+		if (byteArray == null) {
+			return null;
+		}
+		return "0b" + toBinString(byteArray);
+	}
+	
+	/**
+	 * Convert a byte array to a binary string.
+	 * @param byteArray A byte array.
+	 * @return Binary representation.
+	 */
+	public static String toBinString(byte[] byteArray) {
+		StringBuilder sb = new StringBuilder();
+		for (int byteNum = byteArray.length - 1; byteNum >= 0; byteNum--) {
+			for (int bitNum = SIZE_IN_BITS - 1; bitNum >= 0; bitNum--) {
+				if (ByteUtility.bitAt(bitNum, byteArray[byteNum])) {
+					sb.append("1");
+				} else {
+					sb.append("0");
+				}
+			}
+		}
+		return sb.toString();
 	}
 
 	/**
@@ -67,6 +101,39 @@ public class ByteUtility {
 		System.arraycopy(a, 0, c, 0, a.length);
 		System.arraycopy(b, 0, c, a.length, b.length);
 		return c;
+	}
+
+	/**
+	 * Examine the values of bits within a byte.
+	 *
+	 * @param offset A zero indexed offset for the bits in the byte. [0,7]
+	 * @param aByte An input byte.
+	 * @return The bit value of the byte at the given offset.
+	 */
+	public static boolean bitAt(int offset, byte aByte) {
+		return (aByte & (1 << offset)) != 0;
+	}
+	
+	/**
+	 * Set a bit within a byte.
+	 * 
+	 * @param bitValue The bit value to set.
+	 * @param offset The bit offset within the byte.
+	 * @param aByte A byte of bits.
+	 * @return A new byte with the settings applied.
+	 */
+	public static byte setBitAt(boolean bitValue, int offset, byte aByte) {
+		return (byte) ((bitValue) ? (aByte | (1 << offset)) : (aByte & ~(1 << offset)));
+	}
+
+	/**
+	 * Convert a long to 8 bytes.
+	 *
+	 * @param aLong A long.
+	 * @return A 2's compliment byte representation of the long.
+	 */
+	public static byte[] longToBytes(long aLong) {
+		return ByteBuffer.allocate(8).putLong(aLong).array();
 	}
 
 	/**

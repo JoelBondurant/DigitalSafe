@@ -21,6 +21,7 @@ import java.util.logging.Logger;
 public class DigitalServer implements Runnable {
 	
 	private static DigitalServer singleton;
+	private static final Logger logger = Logger.getLogger(DigitalServer.class.getName());
 	private final Executor connectionProcessors;
 	private ServerSocket serverSocket;
 	private final Queue<Peer> peers;
@@ -28,11 +29,16 @@ public class DigitalServer implements Runnable {
 	private boolean onState;
 	private int port;
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws InterruptedException {
 		DigitalServer ds = getInstance();
 		ds.start();
 	}
 
+	@Override
+	public void finalize() throws Throwable {
+		logger.log(Level.INFO, "DigitalServer.finalize();");
+		super.finalize();
+	}
 	
 	private DigitalServer() {
 		this.onState = false;
@@ -42,7 +48,7 @@ public class DigitalServer implements Runnable {
 			this.port = ResourceLoader.getPropertyAsInt("net", "DEFAULT_PORT");
 		} catch (IOException ex) {
 			this.port = 0;
-			Logger.getLogger(DigitalServer.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
+			logger.log(Level.SEVERE, ex.getLocalizedMessage(), ex);
 		}
 	}
 	
@@ -55,15 +61,15 @@ public class DigitalServer implements Runnable {
 	
 	public void start() {
 		this.onState = true;
-		this.daemon = (new Thread(new DigitalServer()));
+		this.daemon = (new Thread(this));
 		this.daemon.setDaemon(true);
 		this.daemon.start();
-		Logger.getLogger(DigitalServer.class.getName()).log(Level.INFO, "Server started.");
+		logger.log(Level.INFO, "Server started.");
 	}
 	
 	public void stop() {
 		this.onState = false;
-		Logger.getLogger(DigitalServer.class.getName()).log(Level.INFO, "Server stopped.");
+		logger.log(Level.INFO, "Server stopped.");
 	}
 	
 	@Override
@@ -71,16 +77,16 @@ public class DigitalServer implements Runnable {
 		try {
 			this.serverSocket = new ServerSocket(this.port);
 		} catch (IOException ex) {
-			Logger.getLogger(DigitalServer.class.getName()).log(Level.INFO, ex.getLocalizedMessage(), ex);
+			logger.log(Level.INFO, ex.getLocalizedMessage(), ex);
 		}
 		while (this.onState) {
 			try {
-				Logger.getLogger(DigitalServer.class.getName()).log(Level.INFO, "Server waiting for connection.");
+				logger.log(Level.INFO, "Server waiting for connection.");
 				Socket clientSocket = this.serverSocket.accept();
-				Logger.getLogger(DigitalServer.class.getName()).log(Level.INFO, "Server processing connection.");
+				logger.log(Level.INFO, "Server processing connection.");
 				this.connectionProcessors.execute(new ConnectionTask(clientSocket));
 			} catch (IOException ex) {
-				Logger.getLogger(DigitalServer.class.getName()).log(Level.INFO, ex.getLocalizedMessage(), ex);
+				logger.log(Level.INFO, ex.getLocalizedMessage(), ex);
 			}
 		}
 	}

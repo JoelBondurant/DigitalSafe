@@ -4,6 +4,8 @@ import com.analyticobjects.utility.ByteUtility;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.UUID;
 
 /**
  * A class to provide a one-way hash useful for mangling passphrases.
@@ -11,8 +13,10 @@ import java.security.NoSuchAlgorithmException;
  * @author Joel Bondurant
  * @version 2013.09
  */
-public final class OneWayHash {
+public final class HashUtility {
 
+	private static final int KEY_SIZE_BYTES = 32;
+	private static final int KEY_SIZE_BITS = 256;
 	private static final String SHA_256 = "SHA-256";
 	private static final String UTF8 = "UTF-8";
 	private static final String STATIC_SALT = "{[Me Some SALT! X?~BxVzzJ14Ry]}";
@@ -85,6 +89,42 @@ public final class OneWayHash {
 		result.append(mix(builder.toString()));
 		result.append(mix(builder.reverse().toString()));
 		return result.toString();
+	}
+	
+	/**
+	 * Generate random 256 bit segments.
+	 * @return
+	 * @throws NoSuchAlgorithmException 
+	 * @throws java.lang.InterruptedException 
+	 */
+	public static byte[] generateRandom256() throws NoSuchAlgorithmException, InterruptedException {
+		byte[] randomSeed1 = ByteUtility.longToBytes(System.nanoTime());
+		byte[] randomSeed2 = (new SecureRandom()).generateSeed(KEY_SIZE_BYTES);
+		byte[] bh1 = ByteUtility.concatenate(randomSeed1, randomSeed2);
+		Thread.sleep(100L);
+		byte[] randomSeed3 = UUID.randomUUID().toString().getBytes();
+		byte[] randomSeed4 = ByteUtility.longToBytes(System.nanoTime());
+		byte[] bh2 = ByteUtility.concatenate(randomSeed3, randomSeed4);
+		return simpleHash256(ByteUtility.concatenate(bh1, bh2));
+	}
+	
+	/**
+	 * Portable 256 bit hash.
+	 * 
+	 * @param msg A message to digest.
+	 * @return A portable 256 bit hash.
+	 * @throws NoSuchAlgorithmException 
+	 */
+	public static byte[] simpleHash256(byte[] msg) throws NoSuchAlgorithmException {
+		MessageDigest sha256 = MessageDigest.getInstance(SHA_256);
+		byte[] byteHolder1, byteHolder2;
+		byteHolder1 = sha256.digest(msg);
+		for (int i = 0; i < 100; i++) {
+			byteHolder2 = sha256.digest(byteHolder1);
+			byteHolder1 = sha256.digest(byteHolder2);
+		}
+		return byteHolder1;
+		
 	}
 
 	/**

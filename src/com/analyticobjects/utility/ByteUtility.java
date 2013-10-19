@@ -117,12 +117,12 @@ public class ByteUtility {
 	/**
 	 * Set a bit within a byte.
 	 * 
-	 * @param bitValue The bit value to set.
 	 * @param offset The bit offset within the byte.
+	 * @param bitValue The bit value to set.
 	 * @param aByte A byte of bits.
 	 * @return A new byte with the settings applied.
 	 */
-	public static byte setBitAt(boolean bitValue, int offset, byte aByte) {
+	public static byte setBitAt(int offset, boolean bitValue, byte aByte) {
 		return (byte) ((bitValue) ? (aByte | (1 << offset)) : (aByte & ~(1 << offset)));
 	}
 

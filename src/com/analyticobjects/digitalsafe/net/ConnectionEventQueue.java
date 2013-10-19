@@ -8,6 +8,6 @@ import java.util.concurrent.PriorityBlockingQueue;
  * @author Joel Bondurant
  * @since 2013.10
  */
-public class ConnectionEventQueue extends PriorityBlockingQueue<ConnectionTask> {
+public class ConnectionEventQueue extends PriorityBlockingQueue<ConnectionEvent> {
 	
 }

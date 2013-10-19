@@ -2,6 +2,7 @@ package com.analyticobjects.digitalsafe.net;
 
 import org.junit.After;
 import org.junit.AfterClass;
+import static org.junit.Assert.fail;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -41,7 +42,12 @@ public class DigitalServerTest {
 	public void testRun() {
 		System.out.println("run");
 		DigitalServer digiServer = DigitalServer.getInstance();
-		digiServer.start();
+		try {
+			digiServer.start();
+		} catch (InterruptedException ex) {
+			System.out.println(ex.getLocalizedMessage());
+			fail();
+		}
 	}
 	
 }

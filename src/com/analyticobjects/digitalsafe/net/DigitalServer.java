@@ -1,14 +1,11 @@
 package com.analyticobjects.digitalsafe.net;
 
 import com.analyticobjects.digitalsafe.res.ResourceLoader;
-import com.analyticobjects.utility.ThreadUtility;
+import com.analyticobjects.utility.LogUtility;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.concurrent.Executor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -22,14 +19,14 @@ public class DigitalServer implements Runnable {
 	
 	private static DigitalServer singleton;
 	private static final Logger logger = Logger.getLogger(DigitalServer.class.getName());
-	private final Executor connectionProcessors;
+	private final ConnectionEventQueue eventQueue;
 	private ServerSocket serverSocket;
-	private final Queue<Peer> peers;
-	private Thread daemon;
+	private Thread serverDaemon, eventDaemon;
 	private boolean onState;
 	private int port;
 	
 	public static void main(String[] args) throws InterruptedException {
+		LogUtility.setLoggingLevelGlobally(Level.ALL);
 		DigitalServer ds = getInstance();
 		ds.start();
 	}
@@ -42,8 +39,7 @@ public class DigitalServer implements Runnable {
 	
 	private DigitalServer() {
 		this.onState = false;
-		this.peers = new LinkedList<>();
-		this.connectionProcessors = ThreadUtility.allAvailableProcessors();
+		this.eventQueue = new ConnectionEventQueue();
 		try {
 			this.port = ResourceLoader.getPropertyAsInt("net", "DEFAULT_PORT");
 		} catch (IOException ex) {
@@ -59,23 +55,29 @@ public class DigitalServer implements Runnable {
 		return singleton;
 	}
 	
-	public void start() {
+	public void start() throws InterruptedException {
 		this.onState = true;
-		this.daemon = (new Thread(this));
-		this.daemon.setDaemon(true);
-		this.daemon.start();
-		logger.log(Level.INFO, "Server started.");
+		this.serverDaemon = (new Thread(this));
+		this.serverDaemon.setDaemon(true);
+		this.serverDaemon.start();
+		this.eventDaemon = new Thread(new ConnectionEventHandler());
+		this.eventDaemon.setDaemon(true);
+		this.eventDaemon.start();
+		this.serverDaemon.join();
+		this.eventDaemon.join();
 	}
 	
 	public void stop() {
 		this.onState = false;
-		logger.log(Level.INFO, "Server stopped.");
+		logger.info("Server stopped.");
 	}
 	
 	@Override
 	public void run() {
 		try {
 			this.serverSocket = new ServerSocket(this.port);
+			logger.log(Level.INFO, "Server started.");
+			logger.log(Level.INFO, "{0}", this.serverSocket.toString());
 		} catch (IOException ex) {
 			logger.log(Level.INFO, ex.getLocalizedMessage(), ex);
 		}
@@ -84,11 +86,20 @@ public class DigitalServer implements Runnable {
 				logger.log(Level.INFO, "Server waiting for connection.");
 				Socket clientSocket = this.serverSocket.accept();
 				logger.log(Level.INFO, "Server processing connection.");
-				this.connectionProcessors.execute(new ConnectionTask(clientSocket));
+				logger.log(Level.INFO, "{0}", clientSocket.toString());
+				this.eventQueue.add(new ConnectionEvent(clientSocket));
 			} catch (IOException ex) {
-				logger.log(Level.INFO, ex.getLocalizedMessage(), ex);
+				logger.log(Level.SEVERE, ex.getLocalizedMessage(), ex);
 			}
 		}
+	}
+	
+	public synchronized boolean onState() {
+		return this.onState;
+	}
+	
+	public ConnectionEvent poll() {
+		return this.eventQueue.poll();
 	}
 	
 	private static InetAddress getDefaultSeed() throws IOException {

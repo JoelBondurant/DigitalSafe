@@ -6,6 +6,7 @@ import com.analyticobjects.digitalsafe.containers.PasswordNote;
 import com.analyticobjects.digitalsafe.exceptions.InvalidPassphraseException;
 import com.analyticobjects.digitalsafe.exceptions.PassphraseExpiredException;
 import com.analyticobjects.digitalsafe.res.ResourceLoader;
+import com.analyticobjects.utility.LogUtility;
 import java.awt.Component;
 import java.util.Enumeration;
 import java.util.logging.Level;
@@ -30,7 +31,7 @@ public class MainFrame extends javax.swing.JFrame {
 	 */
 	private MainFrame() {
 		this.digitalSafe = new DigitalSafe();
-		this.setLoggingLevelGlobally(LOGGING_LEVEL);
+		LogUtility.setLoggingLevelGlobally(LOGGING_LEVEL);
 		preInitComponents(); // lame structure needed due to short-cutting with automated form building...
 		initComponents();
 		postInitComponents();
@@ -263,14 +264,6 @@ public class MainFrame extends javax.swing.JFrame {
 		this.commandPanel.setVisible(true);
 		this.revalidate();
 		this.repaint();
-	}
-
-	private void setLoggingLevelGlobally(Level loggingLevel) {
-		LogManager logManager = LogManager.getLogManager();
-		Enumeration<String> loggerNames = logManager.getLoggerNames();
-		while (loggerNames.hasMoreElements()) {
-			logManager.getLogger(loggerNames.nextElement()).setLevel(loggingLevel);
-		}
 	}
 
     private void passphraseFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_passphraseFieldActionPerformed

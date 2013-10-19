@@ -167,7 +167,7 @@ public final class DHTKey implements Comparable {
 					return;
 				}
 				if (thisBit && !boundingBit) {
-					this.value[byteNum] = ByteUtility.setBitAt(false, bitNum, this.value[byteNum]);
+					this.value[byteNum] = ByteUtility.setBitAt(bitNum, false, this.value[byteNum]);
 				}
 			}
 		}
@@ -179,7 +179,7 @@ public final class DHTKey implements Comparable {
 				boolean thisBit = ByteUtility.bitAt(bitNum, this.value[byteNum]);
 				boolean boundingBit = ByteUtility.bitAt(bitNum, lowerBound.value[byteNum]);
 				if (!thisBit && boundingBit) {
-					this.value[byteNum] = ByteUtility.setBitAt(true, bitNum, this.value[byteNum]);
+					this.value[byteNum] = ByteUtility.setBitAt(bitNum, true, this.value[byteNum]);
 				}
 				if (thisBit && !boundingBit) {
 					return;

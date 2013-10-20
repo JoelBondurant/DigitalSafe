@@ -3,6 +3,7 @@ package com.analyticobjects.digitalsafe.net;
 import com.analyticobjects.digitalsafe.crypto.HashUtility;
 import com.analyticobjects.utility.ByteUtility;
 import com.analyticobjects.utility.StringUtility;
+import java.io.Serializable;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
@@ -12,7 +13,7 @@ import java.security.NoSuchAlgorithmException;
  * @author Joel Bondurant
  * @since 2013.10
  */
-public final class DHTKey implements Comparable {
+public final class DHTKey implements Comparable, Serializable {
 
 	public static final int SIZE_IN_BITS = 256;
 	public static final int SIZE_IN_BYTES = 32;

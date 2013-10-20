@@ -1,9 +1,10 @@
 package com.analyticobjects.digitalsafe.net;
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 
 /**
  * Feature creep.
@@ -14,17 +15,15 @@ import java.net.UnknownHostException;
 public class DHT {
 	
 	public DHTKey put(byte[] data) {
-			
-		return null;
-	}
-	
-	
-	public static void main(String[] args) throws UnknownHostException, IOException {
-		System.out.println(InetAddress.getLocalHost().getHostAddress());
-		try (Socket outsideWorld = new Socket("example.com", 80)) {
-			System.out.println(outsideWorld.getInetAddress());
-			System.out.println(outsideWorld.getLocalAddress());
+		DHTKey key = null;
+		try {
+			key = DHTKey.gen(data);
+		} catch (NoSuchAlgorithmException | InvalidKeyException ex) {
+			Logger.getLogger(DHT.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
 		}
+		return key;
 	}
+	
+	
 	
 }

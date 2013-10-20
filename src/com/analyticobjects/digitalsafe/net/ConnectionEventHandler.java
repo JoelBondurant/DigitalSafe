@@ -5,6 +5,8 @@ import java.util.logging.Logger;
 
 /**
  * To handle connection handling in a separate thread.
+ * 
+ * TODO: This class begs for Java8 closures.
  *
  * @author Joel Bondurant
  * @since 2013.10

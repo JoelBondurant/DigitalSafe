@@ -10,4 +10,10 @@ import java.util.concurrent.PriorityBlockingQueue;
  */
 public class ConnectionEventQueue extends PriorityBlockingQueue<ConnectionEvent> {
 	
+	public static final int MAX_LENGTH = 30;
+	
+	public boolean isFull() {
+		return (this.size() >= MAX_LENGTH);
+	}
+	
 }

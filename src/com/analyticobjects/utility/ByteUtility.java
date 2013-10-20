@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.util.Arrays;
 
 /**
  * A utility class for manipulation of byte arrays.
@@ -177,6 +178,10 @@ public class ByteUtility {
 			bufferedOutputStream.write(bytes);
 			bufferedOutputStream.flush();
 		}
+	}
+	
+	public static byte[] copy(byte[] aByte) {
+		return Arrays.copyOf(aByte, aByte.length);
 	}
 
 }

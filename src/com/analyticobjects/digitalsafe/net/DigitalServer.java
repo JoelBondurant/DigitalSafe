@@ -82,6 +82,15 @@ public class DigitalServer implements Runnable {
 			logger.log(Level.INFO, ex.getLocalizedMessage(), ex);
 		}
 		while (this.onState) {
+			if (this.eventQueue.isFull()) {
+				logger.log(Level.INFO, "Event queue full, server not accepting connections.");
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException ex) {
+					Logger.getLogger(DigitalServer.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
+				}
+				continue;
+			}
 			try {
 				logger.log(Level.INFO, "Server waiting for connection.");
 				Socket clientSocket = this.serverSocket.accept();

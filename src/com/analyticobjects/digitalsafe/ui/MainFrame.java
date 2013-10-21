@@ -8,9 +8,7 @@ import com.analyticobjects.digitalsafe.exceptions.PassphraseExpiredException;
 import com.analyticobjects.digitalsafe.res.ResourceLoader;
 import com.analyticobjects.utility.LogUtility;
 import java.awt.Component;
-import java.util.Enumeration;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import javax.swing.ImageIcon;
 

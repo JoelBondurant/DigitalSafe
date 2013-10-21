@@ -8,6 +8,7 @@ import com.analyticobjects.digitalsafe.database.MasterIndex;
 import com.analyticobjects.digitalsafe.database.SecureDatabase;
 import com.analyticobjects.digitalsafe.exceptions.InvalidPassphraseException;
 import com.analyticobjects.digitalsafe.exceptions.PassphraseExpiredException;
+import com.analyticobjects.digitalsafe.net.Peer;
 import com.analyticobjects.utility.ByteUtility;
 import java.io.File;
 import java.io.IOException;
@@ -19,7 +20,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * A controller to SecureDatabase for higher level access.
+ * A controller to SecureDatabase.
  *
  * @author Joel Bondurant
  * @since 2013.10
@@ -31,6 +32,7 @@ public class DigitalSafe {
 	private static final String NOTES = "NOTES";
 	private static final String PASSWORDS = "PASSWORDS";
 	private static final String FILES = "FILES";
+	private static final String PEERS = "PEERS";
 
 	public DigitalSafe() {
 		this(Paths.get(DEFAULT_FILE_NAME));
@@ -45,6 +47,7 @@ public class DigitalSafe {
 			MasterIndex masterIndex = this.secureDatabase.getMasterIndex();
 			masterIndex.putIndexedMapTable(new IndexedMapTable<>(new MapTable<Note>(NOTES)));
 			masterIndex.putIndexedMapTable(new IndexedMapTable<>(new MapTable<PasswordNote>(PASSWORDS)));
+			masterIndex.putIndexedMapTable(new IndexedMapTable<>(new MapTable<Peer>(PEERS)));
 			masterIndex.putFileTable(new FileTable(FILES));
 			this.secureDatabase.commitMasterIndex(masterIndex);
 		}
@@ -74,7 +77,7 @@ public class DigitalSafe {
 
 	public void putNote(Note noteToSave) throws PassphraseExpiredException {
 		MasterIndex masterIndex = this.secureDatabase.getMasterIndex();
-		IndexedMapTable noteTable = masterIndex.getIndexedMapTable(NOTES);
+		IndexedMapTable<Note> noteTable = masterIndex.getIndexedMapTable(NOTES);
 		noteTable.putEntry(noteToSave);
 		this.secureDatabase.commitMasterIndex(masterIndex);
 	}
@@ -87,7 +90,7 @@ public class DigitalSafe {
 
 	public void putPasswordNote(PasswordNote noteToSave) throws PassphraseExpiredException {
 		MasterIndex masterIndex = this.secureDatabase.getMasterIndex();
-		IndexedMapTable passwordNoteTable = masterIndex.getIndexedMapTable(PASSWORDS);
+		IndexedMapTable<PasswordNote> passwordNoteTable = masterIndex.getIndexedMapTable(PASSWORDS);
 		passwordNoteTable.putEntry(noteToSave);
 		this.secureDatabase.commitMasterIndex(masterIndex);
 	}
@@ -96,6 +99,19 @@ public class DigitalSafe {
 		MasterIndex masterIndex = this.secureDatabase.getMasterIndex();
 		IndexedMapTable<PasswordNote> passwordNoteTable = masterIndex.getIndexedMapTable(PASSWORDS);
 		return passwordNoteTable.getEntry(title);
+	}
+	
+	public void putPeer(Peer aPeer) throws PassphraseExpiredException {
+		MasterIndex masterIndex = this.secureDatabase.getMasterIndex();
+		IndexedMapTable<Peer> peerTable = masterIndex.getIndexedMapTable(PEERS);
+		peerTable.putEntry(aPeer);
+		this.secureDatabase.commitMasterIndex(masterIndex);
+	}
+
+	public List<Peer> getPeers() throws PassphraseExpiredException {
+		MasterIndex masterIndex = this.secureDatabase.getMasterIndex();
+		IndexedMapTable<Peer> peerTable = masterIndex.getIndexedMapTable(PEERS);
+		return peerTable.getAll();
 	}
 
 	public void putFile(File selectedFile) throws PassphraseExpiredException {

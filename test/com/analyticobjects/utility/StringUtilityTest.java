@@ -11,7 +11,7 @@ import org.junit.Test;
  * A test case holder for StringUtility.
  *
  * @author Joel Bondurant
- * @since 2011.0317
+ * @since 2013.10
  */
 public class StringUtilityTest {
 	

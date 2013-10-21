@@ -5,7 +5,7 @@ import com.analyticobjects.digitalsafe.exceptions.PassphraseExpiredException;
 import com.analyticobjects.digitalsafe.crypto.Passphrase;
 import com.analyticobjects.digitalsafe.crypto.TripleAES;
 import com.analyticobjects.digitalsafe.exceptions.InvalidPassphraseException;
-import com.analyticobjects.utility.SerializableUtility;
+import com.analyticobjects.utility.SerializationUtility;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -150,7 +150,7 @@ public final class SecureDatabase {
 			InputStream masterIndexInStream = zipFile.getInputStream(zipFile.getEntry(MASTER_INDEX));) {
 			byte[] encryptedMasterIndex = ByteUtility.readFully(masterIndexInStream);
 			byte[] decryptedMasterIndex = TripleAES.decrypt(this.passphrase, encryptedMasterIndex);
-			return SerializableUtility.<MasterIndex>inflate(decryptedMasterIndex);
+			return SerializationUtility.<MasterIndex>inflate(decryptedMasterIndex);
 		} catch (IOException | ClassNotFoundException ex) {
 			Logger.getLogger(SecureDatabase.class.getName()).log(Level.SEVERE, ex.getLocalizedMessage(), ex);
 		}
@@ -184,7 +184,7 @@ public final class SecureDatabase {
 				}
 			}
 			masterIndex.incrementCommitCount();
-			byte[] encryptedMasterIndex = TripleAES.encrypt(this.passphrase, SerializableUtility.<MasterIndex>deflate(masterIndex));
+			byte[] encryptedMasterIndex = TripleAES.encrypt(this.passphrase, SerializationUtility.<MasterIndex>deflate(masterIndex));
 			zipOut.putNextEntry(new ZipEntry(MASTER_INDEX));
 			zipOut.write(encryptedMasterIndex);
 			zipOut.flush();

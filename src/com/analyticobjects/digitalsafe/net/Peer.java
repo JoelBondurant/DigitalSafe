@@ -1,7 +1,11 @@
 package com.analyticobjects.digitalsafe.net;
 
+import com.analyticobjects.digitalsafe.crypto.KeyPairUtility;
 import com.analyticobjects.digitalsafe.database.IndexedTableEntry;
-import java.net.InetAddress;
+import java.security.InvalidKeyException;
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.UUID;
 
@@ -14,20 +18,29 @@ import java.util.UUID;
 public class Peer implements Node, IndexedTableEntry {
 
 	private Long id;
-	private UUID uniqueId;
+	private UUID guid;
 	private DHTKey dhtKey;
 	private PublicKey publicKey;
-	private Boolean self;
-	private Boolean syncBuddy;
+	private Boolean self, syncNode, backupNode;
 	private ConnectionStatistics connStats;
 	
-	public Peer() {
-		
+	public Peer() {}
+	
+	public PrivateKey initSelf() throws NoSuchAlgorithmException, InterruptedException, InvalidKeyException {
+		this.guid = UUID.randomUUID();
+		this.dhtKey = DHTKey.gen();
+		this.self = Boolean.TRUE;
+		this.syncNode = Boolean.FALSE;
+		this.backupNode = Boolean.FALSE;
+		this.connStats = new ConnectionStatistics();
+		KeyPair keyPair = KeyPairUtility.keyPair();
+		this.publicKey = keyPair.getPublic();
+		return keyPair.getPrivate();
 	}
 
 	@Override
 	public String getIndexId() {
-		return this.dhtKey.toString();
+		return this.guid.toString();
 	}
 
 	@Override
@@ -39,5 +52,42 @@ public class Peer implements Node, IndexedTableEntry {
 	public void setId(Long id) {
 		this.id = id;
 	}
+
+	@Override
+	public UUID getGuid() {
+		return this.guid;
+	}
+
+	@Override
+	public DHTKey getDHTKey() {
+		return this.dhtKey;
+	}
+
+	@Override
+	public PublicKey getPublicKey() {
+		return this.publicKey;
+	}
+	
+	@Override
+	public Boolean isSelf() {
+		return this.self;
+	}
+	
+	@Override
+	public Boolean isSyncNode() {
+		return this.syncNode;
+	}
+
+	@Override
+	public Boolean isBackupNode() {
+		return this.backupNode;
+	}
+
+	@Override
+	public ConnectionStatistics getConnectionStatistics() {
+		return this.connStats;
+	}
+
+
 	
 }

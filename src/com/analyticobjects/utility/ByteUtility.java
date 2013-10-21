@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -174,12 +175,29 @@ public class ByteUtility {
 	 * @throws IOException
 	 */
 	public static void writeFully(Path filePath, byte[] bytes) throws IOException {
-		try (BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(filePath.toFile()))) {
+		writeFully(new FileOutputStream(filePath.toFile()), bytes);
+	}
+	
+	/**
+	 * Write a byte array fully to an output stream.
+	 * 
+	 * @param outputStream An output stream to pump data into.
+	 * @param bytes The data to stream out.
+	 * @throws IOException 
+	 */
+	public static void writeFully(OutputStream outputStream, byte[] bytes) throws IOException {
+		try (BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream)) {
 			bufferedOutputStream.write(bytes);
 			bufferedOutputStream.flush();
 		}
 	}
 	
+	/**
+	 * Copy a byte.
+	 * 
+	 * @param aByte A byte to copy.
+	 * @return A copy of the input.
+	 */
 	public static byte[] copy(byte[] aByte) {
 		return Arrays.copyOf(aByte, aByte.length);
 	}

@@ -15,12 +15,12 @@ import java.util.logging.Logger;
  * @author Joel Bondurant
  * @since 2013.10
  */
-public class SerializableUtility {
+public class SerializationUtility {
 
 	/**
 	 * Deserialize a serialized object.
 	 *
-	 * @param <T> Object type parameter for parameterized type casting.
+	 * @param <T> Parameterized type.
 	 * @param serializedObject A byte array representation of the instance of T.
 	 * @return The deserialized instance of T.
 	 * @throws IOException
@@ -30,7 +30,7 @@ public class SerializableUtility {
 		try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(serializedObject))) {
 			return (T) ois.readObject();
 		} catch (IOException | ClassNotFoundException ex) {
-			Logger.getLogger(SerializableUtility.class.getName()).log(Level.FINE, ex.getLocalizedMessage(), ex);
+			Logger.getLogger(SerializationUtility.class.getName()).log(Level.FINE, ex.getLocalizedMessage(), ex);
 			throw ex;
 		}
 	}
@@ -38,7 +38,7 @@ public class SerializableUtility {
 	/**
 	 * Serialize a serializable object.
 	 *
-	 * @param <T> Type param.
+	 * @param <T> Parameterized type.
 	 * @param serializableObject A serializable object.
 	 * @return A serialized representation of the input.
 	 * @throws IOException
@@ -51,7 +51,7 @@ public class SerializableUtility {
 			oos.flush();
 			return bos.toByteArray();
 		} catch (IOException ex) {
-			Logger.getLogger(SerializableUtility.class.getName()).log(Level.FINE, ex.getLocalizedMessage(), ex);
+			Logger.getLogger(SerializationUtility.class.getName()).log(Level.FINE, ex.getLocalizedMessage(), ex);
 			throw ex;
 		}
 	}

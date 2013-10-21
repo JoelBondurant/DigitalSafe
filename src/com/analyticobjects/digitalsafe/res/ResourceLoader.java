@@ -18,8 +18,7 @@ import java.util.logging.Logger;
  */
 public class ResourceLoader {
 
-	public ResourceLoader() {
-	}
+	public ResourceLoader() {}
 	
 	public static URL getResourceURL(String resourceName) {
 		return ResourceLoader.class.getResource(resourceName);
@@ -30,7 +29,7 @@ public class ResourceLoader {
 	}
 	
 	public static ResourceBundle getResourceBundle(String resourceName) {
-		return ResourceBundle.getBundle(resourceName);
+		return ResourceBundle.getBundle("com.analyticobjects.digitalsafe.res." + resourceName);
 	}
 	
 	public static Properties getProperties(String propertiesName) throws IOException {

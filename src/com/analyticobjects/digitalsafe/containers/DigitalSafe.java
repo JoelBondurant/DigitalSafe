@@ -44,7 +44,7 @@ public class DigitalSafe {
 	
 	private void init() throws PassphraseExpiredException {
 		if (this.secureDatabase.isEmpty()) {
-			MasterIndex masterIndex = this.secureDatabase.getMasterIndex();
+			MasterIndex masterIndex = new MasterIndex();
 			masterIndex.putIndexedMapTable(new IndexedMapTable<>(new MapTable<Note>(NOTES)));
 			masterIndex.putIndexedMapTable(new IndexedMapTable<>(new MapTable<PasswordNote>(PASSWORDS)));
 			masterIndex.putIndexedMapTable(new IndexedMapTable<>(new MapTable<Peer>(PEERS)));
@@ -71,8 +71,9 @@ public class DigitalSafe {
 		this.secureDatabase.lock();
 	}
 
-	public void clear() {
+	public void clear() throws PassphraseExpiredException {
 		this.secureDatabase.clear();
+		this.init();
 	}
 
 	public void putNote(Note noteToSave) throws PassphraseExpiredException {

@@ -48,6 +48,9 @@ public final class TripleAES {
 	 * @throws PassphraseExpiredException
 	 */
 	public static byte[] decrypt(Passphrase passphrase, byte[] encryptedData) throws PassphraseExpiredException {
+		if (encryptedData.length == 0) {
+			return new byte[0];
+		}
 		byte[] byteHolder1;
 		byte[] byteHolder2 = null;
 		try {
@@ -76,6 +79,9 @@ public final class TripleAES {
 	 * @throws PassphraseExpiredException
 	 */
 	public static byte[] encrypt(Passphrase passphrase, byte[] unencryptedData) throws PassphraseExpiredException {
+		if (unencryptedData.length == 0) {
+			return new byte[0];
+		}
 		byte[] byteHolder1;
 		byte[] byteHolder2 = null;
 		try {

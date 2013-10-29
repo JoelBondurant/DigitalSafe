@@ -1,6 +1,6 @@
 package com.analyticobjects.digitalsafe.net;
 
-import com.analyticobjects.digitalsafe.crypto.KeyPairUtility;
+import com.analyticobjects.utility.KeyPairUtility;
 import com.analyticobjects.digitalsafe.database.IndexedTableEntry;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;

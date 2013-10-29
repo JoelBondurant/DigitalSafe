@@ -1,5 +1,6 @@
 package com.analyticobjects.digitalsafe.crypto;
 
+import com.analyticobjects.utility.HashUtility;
 import com.analyticobjects.digitalsafe.exceptions.InvalidPassphraseException;
 import com.analyticobjects.digitalsafe.database.MasterIndex;
 import com.analyticobjects.digitalsafe.exceptions.PassphraseExpiredException;

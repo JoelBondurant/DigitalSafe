@@ -1,6 +1,5 @@
-package com.analyticobjects.digitalsafe.crypto;
+package com.analyticobjects.utility;
 
-import com.analyticobjects.utility.ByteUtility;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

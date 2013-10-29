@@ -1,4 +1,4 @@
-package com.analyticobjects.digitalsafe.crypto;
+package com.analyticobjects.utility;
 
 import java.security.InvalidKeyException;
 import java.security.KeyPair;

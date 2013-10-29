@@ -141,10 +141,6 @@ public final class SecureDatabase {
 	 * @throws PassphraseExpiredException
 	 */
 	public MasterIndex getMasterIndex() throws PassphraseExpiredException {
-		ensureFile();
-		if (isEmpty()) {
-			return new MasterIndex(); // only make a new MasterIndex for empty db.
-		}
 		try (
 			ZipFile zipFile = zipDbFile();
 			InputStream masterIndexInStream = zipFile.getInputStream(zipFile.getEntry(MASTER_INDEX));) {

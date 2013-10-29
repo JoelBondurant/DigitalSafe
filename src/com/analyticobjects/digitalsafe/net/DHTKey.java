@@ -1,6 +1,6 @@
 package com.analyticobjects.digitalsafe.net;
 
-import com.analyticobjects.digitalsafe.crypto.HashUtility;
+import com.analyticobjects.utility.HashUtility;
 import com.analyticobjects.utility.ByteUtility;
 import com.analyticobjects.utility.StringUtility;
 import java.io.Serializable;

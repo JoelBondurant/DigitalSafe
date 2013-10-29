@@ -1,6 +1,6 @@
 package com.analyticobjects.digitalsafe.net;
 
-import com.analyticobjects.digitalsafe.crypto.KeyPairUtility;
+import com.analyticobjects.utility.KeyPairUtility;
 import com.analyticobjects.utility.ByteUtility;
 import com.analyticobjects.utility.SerializationUtility;
 import java.io.IOException;
